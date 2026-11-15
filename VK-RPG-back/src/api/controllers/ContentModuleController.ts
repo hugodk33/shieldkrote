@@ -13,7 +13,8 @@ export class ContentModuleController {
 
   async findCatalog(req: Request, res: Response) {
     try {
-      const catalog = await this.findContentCatalogUseCase.execute()
+      const lang = typeof req.query.lang === 'string' ? req.query.lang : null
+      const catalog = await this.findContentCatalogUseCase.execute(lang)
       return res.json(catalog)
     } catch (e: any) {
       return res.status(500).json({ success: false, error: e.message })

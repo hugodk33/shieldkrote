@@ -5,6 +5,7 @@ export class GameTable {
     public title: string,
     public system: string,
     public intro: string,
-    public modules?: string[]
+    public modules?: string[],
+    public lang?: string
   ) {}
 }

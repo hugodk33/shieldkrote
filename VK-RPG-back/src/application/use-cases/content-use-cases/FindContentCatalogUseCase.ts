@@ -3,7 +3,7 @@ import { ContentCatalogRepository } from '../../../domain/repositories/ContentCa
 export class FindContentCatalogUseCase {
   constructor(private repo: ContentCatalogRepository) {}
 
-  async execute() {
-    return this.repo.findCatalog()
+  async execute(lang?: string | null) {
+    return this.repo.findCatalog(lang)
   }
 }

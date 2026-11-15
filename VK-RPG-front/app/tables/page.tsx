@@ -79,7 +79,10 @@ export default async function TablesPage() {
   }
 
   const username = data.user.username || cookieUsername || "";
-  const total = new Set([...data.narrating, ...data.playing].map((table) => table.id)).size;
+  const allTables = data.all ?? [];
+  const total = new Set(
+    [...data.narrating, ...data.playing, ...allTables].map((table) => table.id)
+  ).size;
   const empty = total === 0;
 
   return (
@@ -234,6 +237,27 @@ export default async function TablesPage() {
               </p>
             )}
           </section>
+
+          {allTables.length ? (
+            <section aria-labelledby="all-tables">
+              <SectionTitle
+                id="all-tables"
+                icon={<ShieldCheck className="w-5 h-5 text-amber-400" />}
+                title={t("pg.hub.allTables")}
+                hint={t("pg.hub.allTablesHint")}
+              />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {allTables.map((table) => (
+                  <TableCard
+                    key={`all-${table.id}`}
+                    table={table}
+                    mode="viewing"
+                    userId={seat}
+                  />
+                ))}
+              </div>
+            </section>
+          ) : null}
 
           <p className="flex items-center justify-center gap-2 pt-2 text-center font-mono text-[10px] uppercase tracking-widest text-zinc-600">
             <Link2 className="w-3 h-3" />

@@ -7,14 +7,13 @@
 // próprio tech_level da peça (sem paridade posicional).
 
 import {
-  contentModules,
   contentCategories,
   skillTag as enSkillTag,
   advantageTagBy as enAdvantageTagBy,
   disadvantageTagBy as enDisadvantageTagBy,
   npcTagBy
 } from '../variables/varContentModules'
-import type { ContentTag } from '../variables/varContentModules'
+import type { ContentModuleSeed, ContentTag } from '../variables/varContentModules'
 
 import { skills as enSkills } from '../variables/varSkills'
 import { advantages as enAdvantages } from '../variables/varAdvantages'
@@ -25,7 +24,52 @@ import { advantages } from './varAdvantages'
 import { disadvantages } from './varDisadvantage'
 import { items } from './varItems'
 
-export { contentModules, contentCategories, npcTagBy }
+export { contentCategories, npcTagBy }
+
+// =========================
+// MÓDULOS (pt-BR)
+// =========================
+// Cada idioma tem o SEU registro de kits: mesmo slug, ids próprios por
+// idioma e nome/descrição localizados. As mesas novas consultam o acervo
+// da própria língua, então EN e PT nunca misturam pacotes.
+export const contentModules: ContentModuleSeed[] = [
+  {
+    id: 'fantasy',
+    slug: 'fantasy',
+    name: 'Módulo Básico',
+    techLevel: 'TL0–3',
+    description: 'O kit básico do GURPS: reinos, heróis, magia e aventura. Combate, magia e o essencial para qualquer mesa clássica — pronto para jogar.',
+    accent: '#a78bfa',
+    sort: 1
+  },
+  {
+    id: 'low-tech',
+    slug: 'low-tech',
+    name: 'Aventuras Antigas',
+    techLevel: 'TL0–4',
+    description: 'O kit histórico e realista antes da pólvora: ofícios rústicos, animais, vela e primitivismo.',
+    accent: '#fbbf24',
+    sort: 2
+  },
+  {
+    id: 'mid-tech',
+    slug: 'mid-tech',
+    name: 'Pólvora & Vapor',
+    techLevel: 'TL5–7',
+    description: 'Rifles, telégrafos, automóveis, mecânica e os primeiros computadores.',
+    accent: '#f97316',
+    sort: 3
+  },
+  {
+    id: 'cyberpunk',
+    slug: 'cyberpunk',
+    name: 'Cyberpunk & Espaço',
+    techLevel: 'TL8–9',
+    description: 'Armeiros de feixe, trajes de combate, genética, espionagem e navegação estelar.',
+    accent: '#22d3ee',
+    sort: 4
+  }
+]
 
 type SkillTag = { category: string; subcategory: string | undefined; moduleId: string }
 

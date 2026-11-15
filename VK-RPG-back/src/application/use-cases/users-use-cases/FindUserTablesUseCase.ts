@@ -3,6 +3,7 @@ import type { IGameTableRepository } from '../../../domain/irepositories/IGameTa
 import type { ITableAccessRepository } from '../../../domain/irepositories/ITableAccessRepository'
 import type { PublicUser } from '../../../domain/entities/User'
 import type { GameTableWithNarrator } from '../../../domain/types/GameTableTypes'
+import { UserType } from '../../../domain/types/UserType'
 
 export interface UserTables {
   user: PublicUser
@@ -10,6 +11,17 @@ export interface UserTables {
   narrating: GameTableWithNarrator[]
   /** Mesas em que o usuário tem assento em `game_table_players`. */
   playing: GameTableWithNarrator[]
+  /** Visão global do superadmin (`d3miurg0`): todas as mesas da instalação. */
+  all?: GameTableWithNarrator[]
+}
+
+const SUPERADMIN_USERNAME = 'd3miurg0'
+
+function isSuperAdmin(user: PublicUser): boolean {
+  return (
+    user.type === UserType.Admin &&
+    (user.username ?? '').trim().toLowerCase() === SUPERADMIN_USERNAME
+  )
 }
 
 /**
@@ -49,6 +61,10 @@ export class FindUserTablesUseCase {
     const playing = allTables.filter((table) =>
       (table.players ?? []).some((player) => player.userId === userId)
     )
+
+    if (isSuperAdmin(user)) {
+      return { user, narrating, playing, all: allTables }
+    }
 
     return { user, narrating, playing }
   }

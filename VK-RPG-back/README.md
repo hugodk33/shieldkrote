@@ -27,9 +27,21 @@ npm install
 ## Database
 
 ```bash
-npm run migration
+# Setup completo (migration + seeds EN e PT) — use este para testar tudo
 npm run seed
+
+# Apenas um idioma (cada um também roda a migration antes)
+npm run seed:en
+npm run seed:pt
 ```
+
+> `npm run migration` cria **somente o esquema + os dois usuários base**. O
+> conteúdo de teste (mesas, catálogo, personagens, NPCs, itens, cenas...) é
+> inserido pelas seeds. Se o banco mostrar apenas 2 usuários e nenhuma mesa,
+> rode `npm run seed`.
+
+Os atalhos `db:setup`, `db:setup:en` e `db:setup:pt` fazem exatamente o mesmo
+que `seed`, `seed:en` e `seed:pt`.
 
 ## Routes
 

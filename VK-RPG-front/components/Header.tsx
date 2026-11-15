@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { LayoutGrid, LogIn, LogOut, ShieldCheck, UserRound } from "lucide-react";
+import { Boxes, LayoutGrid, LogIn, LogOut, ShieldCheck, UserRound } from "lucide-react";
 import LanguageSwitch from "./LanguageSwitch";
 import { logout } from "@/lib/auth";
 import { useTranslation } from "@/lib/i18n";
@@ -75,13 +75,22 @@ export default function Header({
             ) : null}
 
             {signedIn && isSuperAdminSeat ? (
-              <Link
-                href="/admin"
-                className="hidden sm:inline-flex items-center gap-1.5 text-xs font-medium text-amber-300/90 hover:text-amber-200 transition-colors"
-              >
-                <ShieldCheck className="w-3.5 h-3.5" />
-                {t("admin.hub.open")}
-              </Link>
+              <>
+                <Link
+                  href="/admin"
+                  className="hidden sm:inline-flex items-center gap-1.5 text-xs font-medium text-amber-300/90 hover:text-amber-200 transition-colors"
+                >
+                  <ShieldCheck className="w-3.5 h-3.5" />
+                  {t("admin.hub.open")}
+                </Link>
+                <Link
+                  href="/admin/kits"
+                  className="hidden sm:inline-flex items-center gap-1.5 text-xs font-medium text-amber-300/90 hover:text-amber-200 transition-colors"
+                >
+                  <Boxes className="w-3.5 h-3.5" />
+                  {t("admin.kits.title")}
+                </Link>
+              </>
             ) : null}
           </div>
 
@@ -99,13 +108,22 @@ export default function Header({
                 </Link>
 
                 {isSuperAdminSeat ? (
-                  <Link
-                    href="/admin"
-                    aria-label={t("admin.hub.open")}
-                    className="sm:hidden inline-flex items-center justify-center w-8 h-8 rounded-md border border-amber-800/60 text-amber-300 hover:border-amber-600/70 hover:text-amber-200 transition-colors"
-                  >
-                    <ShieldCheck className="w-4 h-4" />
-                  </Link>
+                  <>
+                    <Link
+                      href="/admin"
+                      aria-label={t("admin.hub.open")}
+                      className="sm:hidden inline-flex items-center justify-center w-8 h-8 rounded-md border border-amber-800/60 text-amber-300 hover:border-amber-600/70 hover:text-amber-200 transition-colors"
+                    >
+                      <ShieldCheck className="w-4 h-4" />
+                    </Link>
+                    <Link
+                      href="/admin/kits"
+                      aria-label={t("admin.kits.title")}
+                      className="sm:hidden inline-flex items-center justify-center w-8 h-8 rounded-md border border-amber-800/60 text-amber-300 hover:border-amber-600/70 hover:text-amber-200 transition-colors"
+                    >
+                      <Boxes className="w-4 h-4" />
+                    </Link>
+                  </>
                 ) : null}
 
                 {username ? (

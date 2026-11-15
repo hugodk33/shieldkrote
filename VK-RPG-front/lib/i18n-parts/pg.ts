@@ -28,6 +28,10 @@ export const PT: Record<string, string> = {
   "pg.hub.emptyNarrating": "Nenhuma campanha sendo narrada por você.",
   "pg.hub.emptyPlaying": "Nenhuma mesa em que você jogue por enquanto. Use um convite para entrar.",
   "pg.hub.eyebrow": "Suas mesas",
+  "pg.hub.adminView": "Superadmin",
+  "pg.hub.allTables": "Todas as mesas",
+  "pg.hub.allTablesHint":
+    "Visão global do superadmin — todas as mesas da instalação, mesmo as que você não narra nem joga.",
   "pg.hub.inviteHint": "Tem um link de convite? Abra-o para pedir um assento.",
   "pg.hub.loadError": "Não conseguimos ler suas mesas agora. Tente entrar de novo.",
   "pg.hub.loadErrorEyebrow": "Não deu para carregar",
@@ -193,6 +197,10 @@ export const EN: Record<string, string> = {
   "pg.hub.emptyNarrating": "No campaigns narrated by you yet.",
   "pg.hub.emptyPlaying": "No tables you play in yet. Use an invite to join one.",
   "pg.hub.eyebrow": "Your tables",
+  "pg.hub.adminView": "Superadmin",
+  "pg.hub.allTables": "All tables",
+  "pg.hub.allTablesHint":
+    "Superadmin global view — every table in the install, even ones you neither narrate nor play in.",
   "pg.hub.inviteHint": "Have an invite link? Open it to request a seat.",
   "pg.hub.loadError": "We couldn't read your tables right now. Try signing in again.",
   "pg.hub.loadErrorEyebrow": "Could not load",

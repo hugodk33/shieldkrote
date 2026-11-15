@@ -15,7 +15,9 @@ export class CreateGameTableUseCase {
       data.narratorId,
       data.title,
       data.system,
-      data.intro
+      data.intro,
+      undefined,
+      data.lang === 'en' ? 'en' : 'pt'
     )
 
     const content: ContentSelection = {

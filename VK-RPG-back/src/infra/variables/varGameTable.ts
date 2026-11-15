@@ -1,6 +1,6 @@
 import crypto from 'crypto'
 
-import { mainGameTableId, mainNarratorId, adminId } from './MainUUIDIds/uuidGeral'
+import { mainGameTableId, mainNarratorId, narratorUserId } from './MainUUIDIds/uuidGeral'
 
 import { users } from './varUsers'
 
@@ -14,8 +14,8 @@ type SeedNarrator = {
 export const  narrators: SeedNarrator[] = [
   {
     id: mainNarratorId,
-    userId: adminId,
-    name: 'd3miurg0'
+    userId: narratorUserId,
+    name: 'Narrador'
   }
 ]
 
@@ -46,9 +46,9 @@ type SeedGameTablePlayer = {
 }
 
 export const  gameTablePlayers: SeedGameTablePlayer[] = [
-  { id: crypto.randomUUID(), tableId: mainGameTableId, userId: users[1].id },
   { id: crypto.randomUUID(), tableId: mainGameTableId, userId: users[2].id },
   { id: crypto.randomUUID(), tableId: mainGameTableId, userId: users[3].id },
   { id: crypto.randomUUID(), tableId: mainGameTableId, userId: users[4].id },
-  { id: crypto.randomUUID(), tableId: mainGameTableId, userId: users[5].id }
+  { id: crypto.randomUUID(), tableId: mainGameTableId, userId: users[5].id },
+  { id: crypto.randomUUID(), tableId: mainGameTableId, userId: users[6].id }
 ]

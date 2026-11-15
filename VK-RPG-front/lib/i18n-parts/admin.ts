@@ -8,31 +8,46 @@
    ============================================================ */
 
 export const PT: Record<string, string> = {
-  "admin.eyebrow": "Mesa-base · superadmin",
+  "admin.eyebrow": "Catálogo · superadmin",
   "admin.title": "O Anel",
   "admin.subtitle":
-    "Daqui saem os kits e as categorias que todo novo narrador encontra ao criar uma mesa.",
-  "admin.guidanceTitle": "Como usar estas mesas",
+    "Aqui você mantém a taxonomia do catálogo e os kits que todo novo narrador encontra ao criar uma mesa.",
+  "admin.guidanceTitle": "Como o catálogo funciona",
   "admin.guidanceBody":
-    "As duas mesas-base não têm campanha: são o balcão do catálogo. O que você registra aqui vira opção no passo 2 do assistente de nova mesa.",
+    "As categorias são globais; os kits pertencem a um idioma. O assistente de nova mesa só oferece o acervo do idioma escolhido para a mesa.",
   "admin.guidanceKits":
-    "Kits são pacotes fechados de conteúdo (fantasia, cyberpunk...). O narrador instala o pacote inteiro num clique.",
+    "Kits são pacotes fechados de conteúdo (fantasia, cyberpunk...). Cada idioma tem o seu próprio conjunto de pacotes.",
   "admin.guidanceCategories":
     "Categorias organizam o catálogo por domínio e subcategoria, para o narrador filtrar o que instalar.",
   "admin.baseTables": "Mesas-base",
   "admin.baseTablesHint":
-    "As duas mesas semeadas do superadmin. Abrir qualquer uma leva a este painel.",
+    "As mesas de exemplo da seed agora pertencem ao narrador semeado e instalam os kits do próprio idioma.",
   "admin.backHub": "Minhas mesas",
   "admin.badge": "Mesa-base",
 
+  "admin.nav.categories": "Categorias",
+  "admin.nav.kits": "Kits",
+
   "admin.hub.eyebrow": "Anel do superadmin",
-  "admin.hub.body": "Registre kits e categorias do catálogo nas mesas-base.",
+  "admin.hub.body": "Registre kits por idioma e mantenha a taxonomia do catálogo.",
   "admin.hub.open": "Abrir painel",
 
   "admin.kits.eyebrow": "Catálogo · pacotes",
-  "admin.kits.title": "Kits básicos",
+  "admin.kits.title": "Kits",
+  "admin.kits.pageSubtitle":
+    "Cada narrador instala um ou mais kits ao criar a mesa. O acervo é separado por idioma: mesas EN só recebem kits EN, mesas PT só recebem kits PT.",
   "admin.kits.hint":
     "Pacotes que os narradores podem instalar inteiros ao criar uma mesa.",
+  "admin.kits.open": "Gerenciar kits",
+  "admin.kits.filter": "Filtrar por idioma",
+  "admin.kits.filterAll": "Todos",
+  "admin.kits.lang": "Idioma do kit",
+  "admin.kits.langHint":
+    "O assistente consulta apenas o acervo do idioma da mesa. Um kit registrado em PT não aparece em mesas EN.",
+  "admin.kits.langPt": "Português",
+  "admin.kits.langEn": "English",
+  "admin.kits.categoriesHint":
+    "As categorias usadas para agrupar o conteúdo ficam na tela de taxonomia.",
   "admin.kits.empty": "Nenhum kit registrado ainda.",
   "admin.kits.records": "{n} registros no catálogo",
   "admin.kits.new": "Registrar kit",
@@ -85,30 +100,45 @@ export const PT: Record<string, string> = {
 };
 
 export const EN: Record<string, string> = {
-  "admin.eyebrow": "Base table · superadmin",
+  "admin.eyebrow": "Catalog · superadmin",
   "admin.title": "The Ring",
   "admin.subtitle":
-    "This is where the kits and categories every new narrator sees when creating a table come from.",
-  "admin.guidanceTitle": "How these tables work",
+    "Here you maintain the catalog taxonomy and the kits every new narrator sees when creating a table.",
+  "admin.guidanceTitle": "How the catalog works",
   "admin.guidanceBody":
-    "The two base tables have no campaign: they are the catalog counter. Whatever you register here becomes an option in step 2 of the new-table wizard.",
+    "Categories are global; kits belong to one language. The new-table wizard only offers the catalog for the table's chosen language.",
   "admin.guidanceKits":
-    "Kits are closed content packages (fantasy, cyberpunk...). The narrator installs the whole package in one click.",
+    "Kits are closed content packages (fantasy, cyberpunk...). Each language keeps its own set of packages.",
   "admin.guidanceCategories":
     "Categories organize the catalog by domain and subcategory, so narrators can filter what they install.",
   "admin.baseTables": "Base tables",
   "admin.baseTablesHint":
-    "The superadmin's two seeded tables. Opening either one lands on this panel.",
+    "The seeded sample tables now belong to the seeded narrator and install the kits of their own language.",
   "admin.backHub": "My tables",
   "admin.badge": "Base table",
 
+  "admin.nav.categories": "Categories",
+  "admin.nav.kits": "Kits",
+
   "admin.hub.eyebrow": "Superadmin ring",
-  "admin.hub.body": "Register catalog kits and categories on the base tables.",
+  "admin.hub.body": "Register kits by language and keep the catalog taxonomy.",
   "admin.hub.open": "Open panel",
 
   "admin.kits.eyebrow": "Catalog · packages",
-  "admin.kits.title": "Basic kits",
+  "admin.kits.title": "Kits",
+  "admin.kits.pageSubtitle":
+    "Each narrator installs one or more kits when creating a table. The catalog is split by language: EN tables only receive EN kits, PT tables only receive PT kits.",
   "admin.kits.hint": "Packages narrators can install whole when creating a table.",
+  "admin.kits.open": "Manage kits",
+  "admin.kits.filter": "Filter by language",
+  "admin.kits.filterAll": "All",
+  "admin.kits.lang": "Kit language",
+  "admin.kits.langHint":
+    "The wizard only reads the catalog of the table's language. A kit registered in PT never appears in EN tables.",
+  "admin.kits.langPt": "Português",
+  "admin.kits.langEn": "English",
+  "admin.kits.categoriesHint":
+    "The categories used to group content live on the taxonomy screen.",
   "admin.kits.empty": "No kit registered yet.",
   "admin.kits.records": "{n} catalog records",
   "admin.kits.new": "Register kit",

@@ -1,5 +1,5 @@
 import crypto from 'crypto'
-import { adminId , playerOneId } from './MainUUIDIds/uuidGeral'
+import { adminId , playerOneId, narratorUserId } from './MainUUIDIds/uuidGeral'
 
 type SeedUser = {
   id: string
@@ -19,18 +19,29 @@ export const  users: [
   SeedUser,
   SeedUser,
   SeedUser,
+  SeedUser,
   SeedUser
 ] = [
   {
-    // Superadmin da seed: dono das duas mesas-base onde os kits e as
-    // categorias do catálogo são cadastrados. O nome é contrato do fluxo
-    // exclusivo (`isSuperAdminUser` no front e o guard do backend).
+    // Superadmin da seed: administra o catálogo (kits e categorias) sem
+    // ser dono das mesas de exemplo. O nome é contrato do fluxo exclusivo
+    // (`isSuperAdmin` no front e o guard do backend).
     id: adminId,
     type: 2,
     username: 'd3miurg0',
     password: '123456',
     phone: '85999999999',
     email: 'd3miurg0@email.com'
+  },
+  {
+    // Narrador das mesas de exemplo. Separado do superadmin para que as
+    // mesas semeadas sejam campanhas normais, não o balcão do catálogo.
+    id: narratorUserId,
+    type: 0,
+    username: 'Narrador',
+    password: '123456',
+    phone: '85988887777',
+    email: 'narrador@email.com'
   },
   {
     id: playerOneId,

@@ -23,6 +23,7 @@ export class GameTableRepository implements IGameTableRepository {
   async create(gameTable: GameTable): Promise<void> {
     db.prepare(GameTableDBStrings.GameTableCreateNew as string).run(
       gameTable.id,
+      gameTable.lang ?? 'pt',
       gameTable.narratorId,
       gameTable.title,
       gameTable.system,
@@ -45,6 +46,7 @@ export class GameTableRepository implements IGameTableRepository {
       if (!table) {
         table = {
           id: row.table_id,
+          lang: row.table_lang ?? 'pt',
           narratorId: row.table_narrator_id,
           intro: row.table_intro,
           title: row.table_title,
@@ -146,6 +148,7 @@ export class GameTableRepository implements IGameTableRepository {
 
     const result: GameTableWithPlayers = {
       id: first.table_id,
+      lang: first.table_lang ?? 'pt',
       narratorId: first.table_narrator_id,
       intro: first.table_intro,
       title: first.table_title,
@@ -778,7 +781,8 @@ export class GameTableRepository implements IGameTableRepository {
       title: row.title,
       system: row.table_system, 
       intro: row.intro,
-      modules: this.parseModules(row.modules)
+      modules: this.parseModules(row.modules),
+      lang: row.lang ?? 'pt'
     }
   }
 

@@ -150,12 +150,13 @@ export const GameTableDBStrings:any = {
       ORDER BY nl.id ASC
     `,
     GameTableCreateNew:`
-      INSERT INTO game_tables (id, narrator_id, title, system , intro)
-      VALUES (?, ?, ?, ?, ?)
+      INSERT INTO game_tables (id, lang, narrator_id, title, system , intro)
+      VALUES (?, ?, ?, ?, ?, ?)
     `,
     GameTableFindAll:`
       SELECT
         g.id AS table_id,
+        g.lang AS table_lang,
         g.narrator_id AS table_narrator_id,
         g.intro AS table_intro,
         g.title AS table_title,
@@ -198,6 +199,7 @@ export const GameTableDBStrings:any = {
     GameTableFindById:`
       SELECT
         g.id AS table_id,
+        g.lang AS table_lang,
         g.narrator_id AS table_narrator_id,
         g.intro AS table_intro,
         g.title AS table_title,
@@ -304,6 +306,7 @@ export const GameTableDBStrings:any = {
     GameTableFindTableById:`
       SELECT
         id,
+        lang,
         narrator_id,
         intro,
         title,

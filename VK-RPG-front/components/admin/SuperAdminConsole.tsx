@@ -1,47 +1,27 @@
 "use client";
 
-import { useMemo, useState, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import {
-  ArrowRight,
-  BookMarked,
-  Boxes,
-  FolderTree,
-  LayoutGrid,
-  Plus,
-  ShieldCheck,
-} from "lucide-react";
-import { interpolate, useTranslation } from "@/lib/i18n";
+import { ArrowRight, Boxes, FolderTree, LayoutGrid, Plus, ShieldCheck } from "lucide-react";
+import { useTranslation } from "@/lib/i18n";
 import { inputCls, labelCls, submitCls, disabledSubmitCls } from "@/components/forms/formStyles";
 import { submitJson } from "@/components/forms/submit";
-import type {
-  ContentCatalog,
-  ContentCategoryRow,
-  ContentModuleRow,
-} from "@/lib/types";
+import type { ContentCatalog, ContentCategoryRow } from "@/lib/types";
 
 /* ============================================================
-   SuperAdminConsole — o painel das mesas-base.
+   SuperAdminConsole — a taxonomia do catálogo.
 
-   Só o d3miurg0 chega aqui (o guard real está no backend; as páginas
-   de servidor também redirecionam). As duas mesas-base da seed não
-   têm campanha: em vez do livro da mesa, elas mostram o catálogo —
-   os kits (content_modules) e a taxonomia (content_categories) que
-   o passo 2 do assistente de nova mesa oferece aos narradores.
+   Só o d3miurg0 chega aqui (o guard real está no backend; as
+   páginas de servidor também redirecionam). A tela cuida das
+   categorias globais que o passo 2 do assistente usa para
+   agrupar o conteúdo. Os kits têm rota própria (`/admin/kits`)
+   porque cada idioma mantém o seu próprio acervo.
    ============================================================ */
-
-export type BaseTableLink = {
-  id: string;
-  title: string;
-  system?: string | null;
-};
 
 interface SuperAdminConsoleProps {
   actorId: string;
   initialCatalog: ContentCatalog;
-  baseTables: BaseTableLink[];
-  currentTableId?: string;
 }
 
 const DOMAINS = [
@@ -57,30 +37,12 @@ type Domain = (typeof DOMAINS)[number];
 
 type Notice = { kind: "ok" | "error"; text: string } | null;
 
-type KitDraft = {
-  name: string;
-  slug: string;
-  techLevel: string;
-  accent: string;
-  description: string;
-  sort: string;
-};
-
 type CategoryDraft = {
   domain: Domain;
   parentId: string;
   name: string;
   displayName: string;
   sort: string;
-};
-
-const EMPTY_KIT: KitDraft = {
-  name: "",
-  slug: "",
-  techLevel: "",
-  accent: "",
-  description: "",
-  sort: "",
 };
 
 const EMPTY_CATEGORY: CategoryDraft = {
@@ -90,10 +52,6 @@ const EMPTY_CATEGORY: CategoryDraft = {
   displayName: "",
   sort: "",
 };
-
-function sortModules(modules: ContentModuleRow[]): ContentModuleRow[] {
-  return [...modules].sort((a, b) => a.sort - b.sort || a.name.localeCompare(b.name));
-}
 
 function sortCategories(categories: ContentCategoryRow[]): ContentCategoryRow[] {
   return [...categories].sort(
@@ -152,29 +110,14 @@ function SectionHead({
 export default function SuperAdminConsole({
   actorId,
   initialCatalog,
-  baseTables,
-  currentTableId,
 }: SuperAdminConsoleProps) {
   const { t } = useTranslation();
   const router = useRouter();
 
   const [catalog, setCatalog] = useState<ContentCatalog>(initialCatalog);
-  const [kit, setKit] = useState<KitDraft>(EMPTY_KIT);
   const [category, setCategory] = useState<CategoryDraft>(EMPTY_CATEGORY);
-  const [kitBusy, setKitBusy] = useState(false);
   const [categoryBusy, setCategoryBusy] = useState(false);
-  const [kitNotice, setKitNotice] = useState<Notice>(null);
   const [categoryNotice, setCategoryNotice] = useState<Notice>(null);
-
-  const countsByModule = useMemo(() => {
-    const map = new Map<string, Map<string, number>>();
-    for (const row of catalog.counts) {
-      const domainMap = map.get(row.moduleId) ?? new Map<string, number>();
-      domainMap.set(row.domain, (domainMap.get(row.domain) ?? 0) + row.count);
-      map.set(row.moduleId, domainMap);
-    }
-    return map;
-  }, [catalog.counts]);
 
   const rootsFor = (domain: string) =>
     catalog.categories
@@ -187,45 +130,6 @@ export default function SuperAdminConsole({
       .sort((a, b) => a.sort - b.sort || a.name.localeCompare(b.name));
 
   const actorQuery = `?actor=${encodeURIComponent(actorId)}`;
-
-  async function submitKit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!kit.name.trim()) {
-      setKitNotice({ kind: "error", text: t("admin.form.required") });
-      return;
-    }
-
-    setKitBusy(true);
-    setKitNotice(null);
-    try {
-      const created = await submitJson<ContentModuleRow>(
-        `/api/content-modules${actorQuery}`,
-        "POST",
-        {
-          name: kit.name.trim(),
-          slug: kit.slug.trim() || null,
-          techLevel: kit.techLevel.trim() || null,
-          accent: kit.accent.trim() || null,
-          description: kit.description.trim() || null,
-          sort: kit.sort.trim() || null,
-        }
-      );
-      setCatalog((prev) => ({
-        ...prev,
-        modules: sortModules([...prev.modules, created]),
-      }));
-      setKit(EMPTY_KIT);
-      setKitNotice({ kind: "ok", text: t("admin.kits.saved") });
-      router.refresh();
-    } catch (error) {
-      setKitNotice({
-        kind: "error",
-        text: error instanceof Error ? error.message : t("admin.kits.submitError"),
-      });
-    } finally {
-      setKitBusy(false);
-    }
-  }
 
   async function submitCategory(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -306,20 +210,14 @@ export default function SuperAdminConsole({
                 <LayoutGrid className="h-3.5 w-3.5" />
                 {t("admin.backHub")}
               </Link>
-              {baseTables.map((table) => (
-                <Link
-                  key={table.id}
-                  href={`/table/${table.id}`}
-                  className={`inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 font-mono text-[10px] uppercase tracking-widest transition-colors ${
-                    table.id === currentTableId
-                      ? "border-amber-600/60 bg-amber-950/30 text-amber-300"
-                      : "border-zinc-700/60 text-zinc-400 hover:text-zinc-100"
-                  }`}
-                >
-                  <BookMarked className="h-3.5 w-3.5" />
-                  {table.title}
-                </Link>
-              ))}
+              <Link
+                href="/admin/kits"
+                className="inline-flex items-center gap-1.5 rounded-md border border-amber-700/50 bg-amber-950/20 px-3 py-1.5 font-mono text-[10px] uppercase tracking-widest text-amber-300 hover:bg-amber-950/40 transition-colors"
+              >
+                <Boxes className="h-3.5 w-3.5" />
+                {t("admin.kits.title")}
+                <ArrowRight className="h-3 w-3" />
+              </Link>
             </div>
           </div>
 
@@ -333,7 +231,7 @@ export default function SuperAdminConsole({
         </div>
       </header>
 
-      {/* ---------- guidance + base tables ---------- */}
+      {/* ---------- guidance ---------- */}
       <section className="grid gap-4 md:grid-cols-2">
         <div className="rounded-xl border border-zinc-700/50 bg-zinc-900/40 p-5">
           <h2 className="flex items-center gap-2 text-sm font-bold text-zinc-100">
@@ -355,194 +253,24 @@ export default function SuperAdminConsole({
           </ul>
         </div>
 
-        <div className="rounded-xl border border-zinc-700/50 bg-zinc-900/40 p-5">
-          <h2 className="text-sm font-bold text-zinc-100">{t("admin.baseTables")}</h2>
-          <p className="mt-2 text-xs leading-relaxed text-zinc-500">
-            {t("admin.baseTablesHint")}
-          </p>
-          <ul className="mt-3 space-y-2">
-            {baseTables.map((table) => (
-              <li key={table.id}>
-                <Link
-                  href={`/table/${table.id}`}
-                  className="group flex items-center justify-between gap-3 rounded-lg border border-zinc-800 bg-zinc-950/40 px-3 py-2.5 transition-colors hover:border-amber-800/60 hover:bg-amber-950/10"
-                >
-                  <span className="min-w-0">
-                    <span className="block truncate text-sm font-semibold text-zinc-200">
-                      {table.title}
-                    </span>
-                    <span className="font-mono text-[9px] uppercase tracking-widest text-zinc-500">
-                      {table.system || t("admin.badge")}
-                    </span>
-                  </span>
-                  <ArrowRight className="h-4 w-4 shrink-0 text-zinc-600 transition-transform group-hover:translate-x-0.5 group-hover:text-amber-400" />
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </section>
-
-      {/* ---------- kits ---------- */}
-      <section id="kits">
-        <SectionHead
-          eyebrow={t("admin.kits.eyebrow")}
-          title={t("admin.kits.title")}
-          hint={t("admin.kits.hint")}
-        />
-
-        <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1.55fr)_minmax(0,1fr)]">
-          <div className="space-y-3">
-            {catalog.modules.length === 0 ? (
-              <p className="rounded-xl border border-dashed border-zinc-700/70 bg-zinc-900/30 px-4 py-10 text-center text-sm text-zinc-500">
-                {t("admin.kits.empty")}
-              </p>
-            ) : (
-              catalog.modules.map((module) => {
-                const domainCounts = countsByModule.get(module.id);
-                const total = domainCounts
-                  ? [...domainCounts.values()].reduce((sum, value) => sum + value, 0)
-                  : 0;
-                const accent = module.accent || "#c9a227";
-                return (
-                  <article
-                    key={module.id}
-                    className="rounded-xl border border-zinc-700/50 bg-zinc-900/40 p-4"
-                  >
-                    <div className="flex items-start gap-3">
-                      <span
-                        aria-hidden
-                        className="mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full"
-                        style={{ background: accent, boxShadow: `0 0 8px ${accent}88` }}
-                      />
-                      <div className="min-w-0 flex-1">
-                        <h3 className="text-base font-semibold leading-tight text-zinc-100">
-                          {module.name}
-                        </h3>
-                        <p className="mt-1 font-mono text-[10px] uppercase tracking-widest text-zinc-500">
-                          {module.slug}
-                          {module.tech_level ? ` · ${module.tech_level}` : ""}
-                        </p>
-                      </div>
-                      <span className="shrink-0 font-mono text-[10px] tabular-nums text-zinc-500">
-                        {interpolate(t("admin.kits.records"), { n: total })}
-                      </span>
-                    </div>
-
-                    {module.description ? (
-                      <p className="mt-2.5 text-xs leading-relaxed text-zinc-400">
-                        {module.description}
-                      </p>
-                    ) : null}
-
-                    <div className="mt-3 flex flex-wrap gap-1.5">
-                      {DOMAINS.map((domain) => {
-                        const count = domainCounts?.get(domain) ?? 0;
-                        if (!count) return null;
-                        return (
-                          <span
-                            key={domain}
-                            className="inline-flex items-center gap-1 rounded border border-zinc-700/60 bg-zinc-950/40 px-2 py-0.5 font-mono text-[10px] text-zinc-400"
-                          >
-                            <span className="font-bold tabular-nums text-zinc-100">{count}</span>
-                            {t(`admin.domain.${domain}`)}
-                          </span>
-                        );
-                      })}
-                    </div>
-                  </article>
-                );
-              })
-            )}
+        <Link
+          href="/admin/kits"
+          className="group flex flex-col justify-between rounded-xl border border-amber-900/40 bg-zinc-900/40 p-5 transition-colors hover:border-amber-700/60 hover:bg-amber-950/10"
+        >
+          <div>
+            <h2 className="flex items-center gap-2 text-sm font-bold text-zinc-100">
+              <Boxes className="h-4 w-4 text-amber-400" />
+              {t("admin.kits.title")}
+            </h2>
+            <p className="mt-2 text-xs leading-relaxed text-zinc-500">
+              {t("admin.kits.hint")}
+            </p>
           </div>
-
-          <form
-            onSubmit={submitKit}
-            className="rounded-xl border border-amber-900/40 bg-zinc-900/50 p-5"
-          >
-            <h3 className="flex items-center gap-2 text-sm font-bold text-zinc-100">
-              <Plus className="h-4 w-4 text-amber-400" />
-              {t("admin.kits.new")}
-            </h3>
-
-            <div className="mt-4 space-y-3">
-              <Field label={t("admin.kits.name")}>
-                <input
-                  value={kit.name}
-                  onChange={(event) => setKit((prev) => ({ ...prev, name: event.target.value }))}
-                  placeholder={t("admin.kits.namePh")}
-                  className={inputCls}
-                  required
-                />
-              </Field>
-
-              <div className="grid gap-3 sm:grid-cols-2">
-                <Field label={t("admin.kits.slug")}>
-                  <input
-                    value={kit.slug}
-                    onChange={(event) => setKit((prev) => ({ ...prev, slug: event.target.value }))}
-                    placeholder={t("admin.kits.slugPh")}
-                    className={`${inputCls} font-mono text-sm`}
-                  />
-                </Field>
-                <Field label={t("admin.kits.tech")}>
-                  <input
-                    value={kit.techLevel}
-                    onChange={(event) =>
-                      setKit((prev) => ({ ...prev, techLevel: event.target.value }))
-                    }
-                    placeholder={t("admin.kits.techPh")}
-                    className={`${inputCls} font-mono text-sm`}
-                  />
-                </Field>
-              </div>
-
-              <div className="grid gap-3 sm:grid-cols-[1fr_6rem]">
-                <Field label={t("admin.kits.accent")}>
-                  <input
-                    value={kit.accent}
-                    onChange={(event) =>
-                      setKit((prev) => ({ ...prev, accent: event.target.value }))
-                    }
-                    placeholder={t("admin.kits.accentPh")}
-                    className={`${inputCls} font-mono text-sm`}
-                  />
-                </Field>
-                <Field label={t("admin.kits.sort")}>
-                  <input
-                    type="number"
-                    value={kit.sort}
-                    onChange={(event) => setKit((prev) => ({ ...prev, sort: event.target.value }))}
-                    className={`${inputCls} font-mono text-sm`}
-                  />
-                </Field>
-              </div>
-
-              <Field label={t("admin.kits.description")}>
-                <textarea
-                  value={kit.description}
-                  onChange={(event) =>
-                    setKit((prev) => ({ ...prev, description: event.target.value }))
-                  }
-                  placeholder={t("admin.kits.descriptionPh")}
-                  rows={3}
-                  className={`${inputCls} resize-y`}
-                />
-              </Field>
-            </div>
-
-            <div className="mt-4 flex items-center gap-3">
-              <button
-                type="submit"
-                disabled={kitBusy}
-                className={kitBusy ? disabledSubmitCls : submitCls}
-              >
-                {t("admin.kits.submit")}
-              </button>
-            </div>
-            <NoticeLine notice={kitNotice} />
-          </form>
-        </div>
+          <span className="mt-4 inline-flex items-center gap-1 text-xs font-semibold text-amber-300 transition-colors group-hover:text-amber-200">
+            {t("admin.kits.open")}
+            <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+          </span>
+        </Link>
       </section>
 
       {/* ---------- categories ---------- */}

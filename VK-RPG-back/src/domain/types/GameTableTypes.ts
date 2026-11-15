@@ -136,6 +136,7 @@ export type GameTableWithScenes = {
 
 export type GameTableWithNarrator = {
   id: string
+  lang?: string
   narratorId: string
   intro: string
   title: string

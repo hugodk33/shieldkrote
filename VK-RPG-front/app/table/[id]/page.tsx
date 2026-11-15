@@ -1,13 +1,9 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import { Activity, BookOpen, MapPin, Package, Skull, Sparkles, Users, type LucideIcon } from "lucide-react";
 import { api } from "@/lib/api";
-import { getSeatedUser } from "@/lib/actor";
 import { getLang, makeT } from "@/lib/i18n-server";
-import { isBaseTable, isSuperAdmin } from "@/lib/superAdmin";
 import type {
   CharacterViewer,
-  ContentCatalog,
   GameTable,
   GameTableAdvantages,
   GameTableCharacters,
@@ -17,11 +13,9 @@ import type {
   GameTableNpcs,
   GameTableScenes,
   GameTableSkills,
-  UserTables,
 } from "@/lib/types";
 import { getSessionState } from "@/lib/session";
 import TableTabs from "@/components/TableTabs";
-import SuperAdminConsole from "@/components/admin/SuperAdminConsole";
 import StoryRail from "@/components/scenes/StoryRail";
 import SeatGrid from "@/components/table/SeatGrid";
 import type { SeatData } from "@/components/table/SeatCard";
@@ -154,60 +148,11 @@ function LedgerHeader({ title, meta }: { title: string; meta: string }) {
 
 /* ---------- page ---------- */
 
-const EMPTY_CATALOG: ContentCatalog = {
-  modules: [],
-  categories: [],
-  counts: [],
-  references: [],
-};
-
 export default async function TableOverviewPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const t = makeT(await getLang());
 
   const table = await api<GameTable>(`/game-table/${id}`).catch(() => null as GameTable | null);
-
-  /* ------------------------------------------------------------
-     Mesa-base do superadmin.
-
-     Ela não tem campanha: em vez do livro da mesa, mostra o
-     balcão do catálogo (kits + categorias). Só o d3miurg0 entra;
-     qualquer outro ator volta ao hub. O guard de escrita vive no
-     backend, mas a tela também não deve vazar o painel.
-     ------------------------------------------------------------ */
-  if (isBaseTable(table)) {
-    const seated = await getSeatedUser();
-    if (!seated || !isSuperAdmin(seated)) redirect("/tables");
-
-    const [catalog, tables] = await Promise.all([
-      api<ContentCatalog>("/content-modules").catch(() => null),
-      api<UserTables>(`/users/${encodeURIComponent(seated.id)}/tables`).catch(() => null),
-    ]);
-
-    const seen = new Set<string>();
-    const rows = [...(tables?.narrating ?? []), ...(tables?.playing ?? [])].filter((entry) => {
-      if (!isBaseTable(entry) || seen.has(entry.id)) return false;
-      seen.add(entry.id);
-      return true;
-    });
-    const source = rows.length ? rows : table ? [table] : [];
-    const baseTables = source.map((entry) => ({
-      id: entry.id,
-      title: entry.title,
-      system: entry.system ?? null,
-    }));
-
-    return (
-      <div className="mx-auto max-w-6xl px-6 py-10 md:py-14">
-        <SuperAdminConsole
-          actorId={seated.id}
-          initialCatalog={catalog ?? EMPTY_CATALOG}
-          baseTables={baseTables}
-          currentTableId={id}
-        />
-      </div>
-    );
-  }
 
   const [scenesRes, charsRes, itemsRes, advRes, disRes, skillsRes, npcsRes, modsRes] = await Promise.all([
     api<GameTableScenes>(`/game-table-scenes/${id}`).catch(() => ({ table: null, scenes: [] })),

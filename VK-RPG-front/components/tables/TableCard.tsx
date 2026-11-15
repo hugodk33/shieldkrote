@@ -5,7 +5,6 @@ import { ArrowRight, Dices, ShieldCheck, Swords, UserRound } from "lucide-react"
 import { hueFor } from "@/lib/hue";
 import { useTranslation } from "@/lib/i18n";
 import { clearPreview, markPlayerSide, setNarratorSide } from "@/lib/side";
-import { isBaseTable } from "@/lib/superAdmin";
 import type { GameTable } from "@/lib/types";
 
 /* ============================================================
@@ -17,7 +16,7 @@ import type { GameTable } from "@/lib/types";
    cookie de perspectiva da mesa anterior vazaria para a próxima.
    ============================================================ */
 
-type Mode = "narrating" | "playing";
+type Mode = "narrating" | "playing" | "viewing";
 
 function initials(title: string): string {
   const words = title.split(/\s+/).filter((word) => /[A-Za-z0-9À-ÿ]/.test(word));
@@ -41,20 +40,21 @@ export default function TableCard({
   const count = table.players?.length ?? 0;
   const mine = table.players?.find((player) => player.userId === userId);
   const characterName = mine?.character?.sheet?.name || mine?.character?.name || null;
-  const base = isBaseTable(table);
 
-  const href = mode === "narrating" ? `/table/${table.id}` : `/player/table/${table.id}`;
+  const href = mode === "playing" ? `/player/table/${table.id}` : `/table/${table.id}`;
   const tone =
-    mode === "narrating"
-      ? "border-emerald-800/40 bg-emerald-950/20 text-emerald-300"
-      : "border-sky-800/40 bg-sky-950/20 text-sky-300";
+    mode === "playing"
+      ? "border-sky-800/40 bg-sky-950/20 text-sky-300"
+      : mode === "viewing"
+        ? "border-amber-800/40 bg-amber-950/20 text-amber-300"
+        : "border-emerald-800/40 bg-emerald-950/20 text-emerald-300";
 
   const open = () => {
-    if (mode === "narrating") {
-      setNarratorSide();
-    } else {
+    if (mode === "playing") {
       clearPreview();
       markPlayerSide();
+    } else {
+      setNarratorSide();
     }
   };
 
@@ -79,22 +79,22 @@ export default function TableCard({
             <span
               className={`inline-flex items-center gap-1 rounded border px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-widest ${tone}`}
             >
-              {mode === "narrating" ? (
-                <Dices className="w-3 h-3" />
-              ) : (
+              {mode === "playing" ? (
                 <Swords className="w-3 h-3" />
+              ) : mode === "viewing" ? (
+                <ShieldCheck className="w-3 h-3" />
+              ) : (
+                <Dices className="w-3 h-3" />
               )}
-              {mode === "narrating" ? t("pg.hub.narrating") : t("pg.hub.playing")}
+              {mode === "playing"
+                ? t("pg.hub.playing")
+                : mode === "viewing"
+                  ? t("pg.hub.adminView")
+                  : t("pg.hub.narrating")}
             </span>
             <span className="font-mono text-[9px] uppercase tracking-widest text-zinc-500">
               {table.system || t("f.system")}
             </span>
-            {base ? (
-              <span className="inline-flex items-center gap-1 rounded border border-amber-800/50 bg-amber-950/30 px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-widest text-amber-300">
-                <ShieldCheck className="h-3 w-3" />
-                {t("admin.badge")}
-              </span>
-            ) : null}
           </div>
 
           <h3 className="mt-1.5 text-lg font-bold text-zinc-100 leading-tight truncate">
@@ -102,7 +102,7 @@ export default function TableCard({
           </h3>
 
           <p className="mt-1 text-[11px] text-zinc-500 truncate">
-            {mode === "narrating"
+            {mode !== "playing"
               ? t("pg.hub.narratedBy").replace(
                   "{name}",
                   table.narrator?.username || t("pg.hub.you")
@@ -127,11 +127,7 @@ export default function TableCard({
           )}
         </span>
         <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-300 group-hover:text-emerald-200 transition-colors">
-          {base
-            ? t("admin.hub.open")
-            : mode === "narrating"
-              ? t("pg.hub.openNarrator")
-              : t("pg.hub.openPlayer")}
+          {mode === "playing" ? t("pg.hub.openPlayer") : t("pg.hub.openNarrator")}
           <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
         </span>
       </div>

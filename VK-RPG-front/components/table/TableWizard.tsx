@@ -27,6 +27,8 @@ interface TableWizardProps {
   narratorOptions: Array<{ id: string; name: string }>;
   defaultNarratorId?: string;
   catalog: ContentCatalog | null;
+  /** Catalog language of the table being created (`en` | `pt`). */
+  lang: string;
 }
 
 const DOMAIN_ORDER: Array<{ label: string; domain: string }> = [
@@ -155,7 +157,7 @@ function TypeHeader({
   );
 }
 
-export default function TableWizard({ narratorOptions, defaultNarratorId, catalog }: TableWizardProps) {
+export default function TableWizard({ narratorOptions, defaultNarratorId, catalog, lang }: TableWizardProps) {
   const router = useRouter();
   const [step, setStep] = useState(1);
   const [narratorId, setNarratorId] = useState(defaultNarratorId ?? narratorOptions[0]?.id ?? "");
@@ -320,6 +322,7 @@ export default function TableWizard({ narratorOptions, defaultNarratorId, catalo
 
       const payload = {
         narratorId,
+        lang,
         title: title.trim(),
         system: "GURPS",
         intro: intro.trim(),
@@ -492,6 +495,16 @@ export default function TableWizard({ narratorOptions, defaultNarratorId, catalo
                   GURPS
                 </span>
                 <p className="mt-1.5 text-xs text-zinc-500">{t("f.systemLocked")}</p>
+              </div>
+            </div>
+
+            <div>
+              <label className={fieldLabel}>{t("f.catalogLang")}</label>
+              <div className="mt-1.5">
+                <span className="inline-flex items-center font-mono text-[10px] uppercase tracking-widest px-2 py-1 rounded bg-amber-700/10 text-amber-300 border border-amber-700/25">
+                  {lang === "en" ? t("f.catalogLangEn") : t("f.catalogLangPt")}
+                </span>
+                <p className="mt-1.5 text-xs text-zinc-500">{t("f.catalogLangHint")}</p>
               </div>
             </div>
 

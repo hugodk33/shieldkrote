@@ -1,6 +1,7 @@
 // src/infra/database/migrate.ts
 import { db } from './database'
 import { adminId, playerOneId } from '../variables/MainUUIDIds/uuidGeral'
+import { resolveWeaponSkills } from './resolveWeaponSkills'
 
 db.exec(`
 
@@ -336,7 +337,7 @@ CREATE TABLE IF NOT EXISTS narration_actions (
   r INTEGER,
   facing INTEGER DEFAULT 0, -- direção (0-5) após o movimento
   datetime DATETIME DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (character_id) REFERENCES game_table_characters(id)
+  FOREIGN KEY (character_id) REFERENCES game_table_characters(id),
   FOREIGN KEY (target) REFERENCES game_table_characters(id)
 );
 
@@ -791,13 +792,16 @@ CREATE TABLE IF NOT EXISTS log (
 -- apontam para um content_module via module_id (fonte/posse).
 -- =========================
 CREATE TABLE IF NOT EXISTS content_modules (
-  id TEXT PRIMARY KEY,
-  slug TEXT UNIQUE,
+  id TEXT NOT NULL,
+  lang TEXT NOT NULL DEFAULT 'pt',
+  slug TEXT NOT NULL,
   name TEXT,
   tech_level TEXT,
   description TEXT,
   accent TEXT,
-  sort INTEGER DEFAULT 0
+  sort INTEGER DEFAULT 0,
+  PRIMARY KEY (id, lang),
+  UNIQUE (slug, lang)
 );
 
 -- =========================
@@ -1207,6 +1211,39 @@ if (contentItemCols.length && !contentItemCols.includes('tech_level')) {
   db.exec("ALTER TABLE content_items ADD COLUMN tech_level TEXT")
 }
 
+// content_modules.lang — kits passaram a existir por idioma. Bases antigas
+// tinham um único catálogo (PT); reerguemos a tabela com chave composta
+// (id, lang) e slug único por idioma, preservando as linhas existentes em PT.
+const contentModuleCols = (db.prepare("PRAGMA table_info(content_modules)").all() as any[]).map((c) => c.name)
+if (contentModuleCols.length && !contentModuleCols.includes('lang')) {
+  db.exec('PRAGMA foreign_keys = OFF')
+  db.exec('BEGIN')
+  db.exec(`
+    CREATE TABLE content_modules_new (
+      id TEXT NOT NULL,
+      lang TEXT NOT NULL DEFAULT 'pt',
+      slug TEXT NOT NULL,
+      name TEXT,
+      tech_level TEXT,
+      description TEXT,
+      accent TEXT,
+      sort INTEGER DEFAULT 0,
+      PRIMARY KEY (id, lang),
+      UNIQUE (slug, lang)
+    )
+  `)
+  db.exec(`
+    INSERT INTO content_modules_new (id, lang, slug, name, tech_level, description, accent, sort)
+    SELECT id, 'pt', slug, name, tech_level, description, accent, sort
+    FROM content_modules
+  `)
+  db.exec('DROP TABLE content_modules')
+  db.exec('ALTER TABLE content_modules_new RENAME TO content_modules')
+  db.exec('COMMIT')
+  db.exec('PRAGMA foreign_keys = ON')
+  console.log('  ✓ content_modules: coluna lang adicionada (kits por idioma)')
+}
+
 // game_table_npcs.location_id — vínculo npc -> local (equipe de lojas, bases antigas)
 const npcCols = (db.prepare("PRAGMA table_info(game_table_npcs)").all() as any[]).map((c) => c.name)
 if (npcCols.length && !npcCols.includes('location_id')) {
@@ -1423,58 +1460,12 @@ for (const { table, cols } of skillLinkAdds) {
   }
 }
 
-// 4 das 18 armas do seed citam uma pericia que nao existe com esse nome.
-const skillAliases: Record<string, string> = {
-  Axe: 'Axe or Mace',
-  'Guns (Pistol)': 'Guns',
-  Machado: 'Machado ou Maça',
-  'Armas de Fogo (Pistola)': 'Armas de Fogo'
-}
-
-if ((db.prepare("PRAGMA table_info(game_table_skills)").all() as any[]).length) {
-  const findSkillByName = db.prepare(`
-    SELECT id FROM game_table_skills
-    WHERE table_id IS ? AND lang = ? AND name = ?
-    LIMIT 1
-  `)
-  const pendingWeapons = db.prepare(`
-    SELECT w.id, w.item_id, w.lang, w.skill, i.table_id
-    FROM game_table_weapons w
-    LEFT JOIN game_table_items i ON i.id = w.item_id AND i.lang = w.lang
-    WHERE w.skill_id IS NULL AND w.skill IS NOT NULL AND w.skill != ''
-  `).all() as any[]
-  const setWeaponSkill = db.prepare(`UPDATE game_table_weapons SET skill_id = ? WHERE id = ? AND lang = ?`)
-  const setItemSkill = db.prepare(`UPDATE game_table_items SET skill_id = ? WHERE id = ? AND lang = ?`)
-
-  // So preenche vazio: escolha manual feita no form nao e sobrescrita, e o
-  // script pode rodar quantas vezes quiser.
-  const resolveSkills = db.transaction(() => {
-    let resolved = 0
-    let unresolved = 0
-    for (const w of pendingWeapons) {
-      let skillId: string | undefined
-      for (const candidate of [w.skill, skillAliases[w.skill]]) {
-        if (!candidate) continue
-        const row = findSkillByName.get(w.table_id, w.lang, candidate) as any
-        if (row) {
-          skillId = row.id
-          break
-        }
-      }
-      if (!skillId) {
-        unresolved++
-        continue
-      }
-      setWeaponSkill.run(skillId, w.id, w.lang)
-      if (w.item_id) setItemSkill.run(skillId, w.item_id, w.lang)
-      resolved++
-    }
-    return { resolved, unresolved }
-  })
-  const { resolved, unresolved } = resolveSkills()
-  if (resolved || unresolved) {
-    console.log(`🔗 weapon->skill: ${resolved} resolvida(s), ${unresolved} sem match`)
-  }
+// weapon -> skill (texto solto) resolvido por nome e espelhado no item.
+// A mesma função é chamada pelo seed DEPOIS de inserir as armas (o seed
+// apaga/reinsere as tabelas, então resolver só na migration não basta).
+const { resolved, unresolved } = resolveWeaponSkills()
+if (resolved || unresolved) {
+  console.log(`🔗 weapon->skill: ${resolved} resolvida(s), ${unresolved} sem match`)
 }
 
 console.log('✅ Full database migrated!')
@@ -1490,6 +1481,21 @@ baseUserStmt.run(adminId, 2, 'd3miurg0', '123456', '85999999999', 'd3miurg0@emai
 baseUserStmt.run(playerOneId, 1, 'João Pedro', '123456', '85888888888', 'joao.pedro@email.com')
 
 console.log('👤 Base users (admin + player) inserted!')
+
+// ---- AVISO: banco migrado mas sem conteúdo ----
+// A migration cria SOMENTE o esquema + os dois usuários de acesso. Todo o
+// conteúdo (catálogo, mesas, personagens, NPCs, itens, cenas...) vem das
+// seeds. Sem este aviso o banco parece "pela metade" (2 usuários, nenhuma
+// mesa) e dá a impressão de que os arquivos de variables não foram lidos.
+const gameTableCount = (db.prepare('SELECT COUNT(*) AS n FROM game_tables').get() as { n: number }).n
+if (gameTableCount === 0) {
+  console.warn('')
+  console.warn('⚠️  Banco migrado, mas SEM conteúdo de teste (nenhuma mesa registrada).')
+  console.warn('    A migration cria apenas o esquema + usuários base.')
+  console.warn('    Rode "npm run seed" (EN + PT) ou "npm run seed:en"/"npm run seed:pt"')
+  console.warn('    para carregar as seeds completas (o seed já roda a migration antes).')
+  console.warn('')
+}
 
 // ---- DIFFICULTY VOCABULARY: "Average" -> "Medium" ----
 // O formulário de skill gravava `Average`, mas o catálogo (seed) sempre usou

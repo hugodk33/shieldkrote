@@ -21,6 +21,8 @@ export interface UserTables {
   user: PublicUser
   narrating: GameTable[]
   playing: GameTable[]
+  /** Global view for the seeded superadmin: every table in the install. */
+  all?: GameTable[]
 }
 
 export interface Sheet {
@@ -262,6 +264,8 @@ export interface TableCharacter {
 
 export interface GameTable {
   id: string
+  /** Catalog language the table was built from (`en` | `pt`). */
+  lang?: string
   narratorId?: string
   narrator?: Narrator
   intro?: string
@@ -682,6 +686,8 @@ export interface TableCurrency {
 
 export interface ContentModuleRow {
   id: string
+  /** Catalog language this kit belongs to (`en` | `pt`). */
+  lang: string
   slug: string
   name: string
   tech_level: string | null
@@ -701,6 +707,7 @@ export interface ContentCategoryRow {
 
 export interface ContentCatalogCount {
   moduleId: string
+  lang: string
   domain: string
   category: string
   subcategory: string | null

@@ -1,9 +1,15 @@
 // src/infra/database/seed.ts
 // Seed bilingue de DUAS MESAS independentes: cada variante (en/pt) é dona dos
 // SEUS ids (bundles MainUUIDIds e mainGameTableId próprios). Conteúdo por
-// variante (characters, npcs, narration_*, dependecies/preDetermined,
+// variante (catálogo, characters, npcs, narration_*, dependecies/preDetermined,
 // modifiers, visibility) é inserido dentro do loop, pois os ids diferem.
-// Tabelas globais (users, narrators, conteúdo de módulos, dano) ficam uma vez.
+// Tabelas globais (users, narrators, categorias, dano) ficam uma vez.
+//
+// O catálogo (content_modules + content_*) é semeado POR IDIOMA a partir das
+// variáveis — ele é a fonte dos kits, não um espelho das mesas. Cada mesa de
+// exemplo nasce com os kits da sua língua já instalados (game_tables.modules)
+// e as linhas recebem os mesmos ids do catálogo, preservando as relações
+// autorais (skills/itens/armas) da seed.
 //
 // Seleção de idioma por argumento (cada execução limpa o banco e semeia só o alvo):
 //   npm run seed        -> EN + PT
@@ -13,6 +19,7 @@ import { db } from './database'
 import './migrate'
 import crypto from 'crypto'
 import { portraitAsset, bodyAsset, itemAsset, backdropAsset, resetSeedAssets } from '../seed-assets'
+import { resolveWeaponSkills } from './resolveWeaponSkills'
 
 const allTables = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'").all() as { name: string }[]
 
@@ -57,7 +64,6 @@ const {
   users,
   narrators,
   gurpsDamageTable,
-  contentModules,
   contentCategories
 } = VEn
 
@@ -91,25 +97,7 @@ for (const narrator of narrators) {
   narratorStmt.run(narrator.id, narrator.userId, narrator.name)
 }
 
-// insert content modules (pacotes de campanha)
-const contentModuleStmt = db.prepare(`
-  INSERT INTO content_modules (id, slug, name, tech_level, description, accent, sort)
-  VALUES (?, ?, ?, ?, ?, ?, ?)
-`)
-
-for (const module of contentModules) {
-  contentModuleStmt.run(
-    module.id,
-    module.slug,
-    module.name,
-    module.techLevel,
-    module.description,
-    module.accent,
-    module.sort
-  )
-}
-
-// insert content categories (árvore GURPS)
+// insert content categories (árvore GURPS — taxonomia global, compartilhada)
 const contentCategoryStmt = db.prepare(`
   INSERT INTO content_categories (id, domain, parent_id, name, display_name, sort)
   VALUES (?, ?, ?, ?, ?, ?)
@@ -177,14 +165,284 @@ modifierNarrationsNPCs,
     npcTagBy
   } = V
 
-  // insert game tables
-  const gameTableStmt = db.prepare(`
-    INSERT INTO game_tables (id, lang, narrator_id, intro , title, system)
-    VALUES (?, ?, ?, ? , ?, ?)
+  // ----------------------------------------------------------
+  // CATÁLOGO GLOBAL (content_*) — por idioma
+  // ----------------------------------------------------------
+  // Os kits e as linhas de referência nascem AQUI, das variáveis do idioma,
+  // com os MESMOS ids das linhas da mesa de exemplo. A mesa então instala
+  // os kits (game_tables.modules) e recebe conteúdo equivalente — o
+  // catálogo deixa de ser derivado das mesas semeadas.
+  const contentModuleStmt = db.prepare(`
+    INSERT INTO content_modules (id, lang, slug, name, tech_level, description, accent, sort)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
   `)
 
+  for (const module of V.contentModules) {
+    contentModuleStmt.run(
+      module.id,
+      lang,
+      module.slug,
+      module.name,
+      module.techLevel,
+      module.description,
+      module.accent,
+      module.sort
+    )
+  }
+
+  const catalogSkillStmt = db.prepare(`
+    INSERT INTO content_skills
+      (id, lang, name, category, subcategory, type, predefinition_type, predefinition_difficulty, description, module_id)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `)
+  for (const skill of skills) {
+    const tag = skillTag[skill.name] ?? { moduleId: 'fantasy', category: 'survival', subcategory: 'wilderness' }
+    catalogSkillStmt.run(
+      skill.id,
+      lang,
+      skill.name,
+      tag.category,
+      tag.subcategory ?? null,
+      null,
+      skill.predefinition_type,
+      skill.predefinition_difficulty,
+      skill.description,
+      tag.moduleId
+    )
+  }
+
+  const catalogAdvantageStmt = db.prepare(`
+    INSERT INTO content_advantages
+      (id, lang, name, category, subcategory, cost_points, description, module_id)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+  `)
+  for (const advantage of advantages) {
+    const tag = advantageTagBy(advantage.name)
+    catalogAdvantageStmt.run(
+      advantage.id,
+      lang,
+      advantage.name,
+      tag.category,
+      tag.subcategory ?? null,
+      advantage.costPoints,
+      advantage.description,
+      tag.moduleId
+    )
+  }
+
+  const catalogDisadvantageStmt = db.prepare(`
+    INSERT INTO content_disadvantages
+      (id, lang, name, category, subcategory, cost_points, effect, description, module_id)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `)
+  for (const disadvantage of disadvantages) {
+    const tag = disadvantageTagBy(disadvantage.name)
+    catalogDisadvantageStmt.run(
+      disadvantage.id,
+      lang,
+      disadvantage.name,
+      tag.category,
+      tag.subcategory ?? null,
+      disadvantage.costPoints,
+      null,
+      disadvantage.description,
+      tag.moduleId
+    )
+  }
+
+  const catalogItemStmt = db.prepare(`
+    INSERT INTO content_items
+      (id, lang, name, kind, category, weight_lb, cost, dimensions, description, quality, condition, module_id, subcategory, tech_level)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `)
+  for (const item of items) {
+    const tag = itemTagBy(item)
+    catalogItemStmt.run(
+      item.id,
+      lang,
+      item.name,
+      item.kind,
+      item.category,
+      item.weight_lb,
+      item.cost,
+      item.dimensions,
+      item.description,
+      item.quality,
+      item.condition,
+      tag.moduleId,
+      tag.subcategory ?? null,
+      item.tech_level ?? null
+    )
+  }
+
+  const itemIds = new Set(items.map((item) => item.id))
+
+  const catalogWeaponStmt = db.prepare(`
+    INSERT INTO content_weapons
+      (id, lang, item_id, skill, min_st, rated_st, handedness, reach, parry, block, fit)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `)
+  const catalogWeaponIds = new Set<string>()
+  for (const weapon of weapons) {
+    if (!itemIds.has(weapon.item_id)) continue
+    catalogWeaponIds.add(weapon.id)
+    catalogWeaponStmt.run(
+      weapon.id,
+      lang,
+      weapon.item_id,
+      weapon.skill,
+      weapon.min_st,
+      weapon.rated_st,
+      weapon.handedness,
+      weapon.reach,
+      weapon.parry,
+      weapon.block,
+      weapon.fit
+    )
+  }
+
+  const catalogAttackStmt = db.prepare(`
+    INSERT INTO content_weapon_attacks
+      (id, lang, weapon_id, name, usage, damage_source, damage_modifier, damage_dice, damage_type, armor_penetration, accuracy, range, recoil, shots)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `)
+  for (const attack of weaponAttacks) {
+    if (!catalogWeaponIds.has(attack.weapon_id)) continue
+    catalogAttackStmt.run(
+      attack.id,
+      lang,
+      attack.weapon_id,
+      attack.name,
+      attack.usage,
+      attack.damage_source,
+      attack.damage_modifier,
+      attack.damage_dice,
+      attack.damage_type,
+      attack.armor_penetration,
+      attack.accuracy,
+      attack.range,
+      attack.recoil,
+      attack.shots
+    )
+  }
+
+  const catalogArmorStmt = db.prepare(`
+    INSERT INTO content_armors (id, lang, item_id, dr, flex, locations, fit)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
+  `)
+  for (const armor of armors) {
+    if (!itemIds.has(armor.item_id)) continue
+    catalogArmorStmt.run(
+      armor.id,
+      lang,
+      armor.item_id,
+      armor.dr,
+      armor.flex,
+      armor.locations,
+      armor.fit
+    )
+  }
+
+  const sheetByCharacterId = new Map(characterSheets.map((sheet) => [sheet.characterId, sheet]))
+  const catalogNpcStmt = db.prepare(`
+    INSERT INTO content_npcs
+      (id, lang, name, bio, backstory, points, hp, st, dx, iq, ht, fatigue, encumbrance, status, module_id, category, subcategory)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `)
+  for (const npcSheet of newNpcs) {
+    const sheet = sheetByCharacterId.get(npcSheet.character_id)
+    const tag = npcTagBy(sheet?.name ?? '', npcSheet.status)
+    catalogNpcStmt.run(
+      npcSheet.id,
+      lang,
+      sheet?.name ?? null,
+      sheet?.bio ?? null,
+      sheet?.backstory ?? null,
+      sheet?.points ?? null,
+      sheet?.hp ?? null,
+      sheet?.st ?? null,
+      sheet?.dx ?? null,
+      sheet?.iq ?? null,
+      sheet?.ht ?? null,
+      sheet?.fatigue ?? null,
+      sheet?.encumbrance ?? null,
+      npcSheet.status,
+      tag.moduleId ?? null,
+      tag.category ?? null,
+      tag.subcategory ?? null
+    )
+  }
+
+  // locations: catálogo e mesa compartilham nível/caminho calculados a
+  // partir da própria árvore de variáveis (pai antes do filho não é
+  // garantido, então resolvemos recursivamente).
+  const locationById = new Map(modifierTableLocations.map((loc) => [loc.id, loc]))
+  const locationLevelPath = new Map<string, { level: number; path: string }>()
+  const resolveLocation = (loc: (typeof modifierTableLocations)[number]): { level: number; path: string } => {
+    const cached = locationLevelPath.get(loc.id)
+    if (cached) return cached
+    const parent = loc.parent_id ? locationById.get(loc.parent_id) : undefined
+    const resolved = parent
+      ? (() => {
+          const p = resolveLocation(parent)
+          return { level: p.level + 1, path: `${p.path}${loc.id}/`.replace(/\/{2,}/g, '/') }
+        })()
+      : { level: 0, path: `/${loc.id}/` }
+    locationLevelPath.set(loc.id, resolved)
+    return resolved
+  }
+
+  const catalogLocationStmt = db.prepare(`
+    INSERT INTO content_locations
+      (id, lang, parent_id, kind, level, path, name, region, address, sub_region, is_indoor, other, country, area, dimensions, description,
+       hex_size_m, width_hexes, height_hexes, center_q, center_r, orientation, rotation_deg, is_battlemap, shop_name, tiles, drawing)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `)
+  for (const loc of modifierTableLocations) {
+    const { level, path } = resolveLocation(loc)
+    const hexSizeM = loc.hex_size_m ?? null
+    const isBattlemap = loc.is_battlemap ?? (hexSizeM != null && hexSizeM <= 2 ? 1 : 0)
+    catalogLocationStmt.run(
+      loc.id,
+      lang,
+      loc.parent_id ?? null,
+      loc.kind ?? 'site',
+      level,
+      path,
+      loc.name,
+      loc.region ?? null,
+      loc.address ?? null,
+      loc.sub_region ?? null,
+      loc.is_indoor ?? 0,
+      loc.other ?? null,
+      loc.country ?? null,
+      loc.area ?? null,
+      loc.dimensions ?? null,
+      loc.description ?? null,
+      hexSizeM,
+      loc.width_hexes ?? null,
+      loc.height_hexes ?? null,
+      loc.center_q ?? 0,
+      loc.center_r ?? 0,
+      loc.orientation ?? 'flat',
+      loc.rotation_deg ?? 0,
+      isBattlemap,
+      loc.shop_name ?? null,
+      JSON.stringify(loc.tiles ?? []),
+      JSON.stringify(loc.drawing ?? [])
+    )
+  }
+
+  // insert game tables (com os kits da língua já instalados)
+  const gameTableStmt = db.prepare(`
+    INSERT INTO game_tables (id, lang, narrator_id, intro , title, system, modules)
+    VALUES (?, ?, ?, ? , ?, ?, ?)
+  `)
+
+  const installedModules = JSON.stringify(V.contentModules.map((module) => module.id))
+
   for (const table of gameTables) {
-    gameTableStmt.run(table.id, lang, table.narratorId, table.intro , table.title, table.system)
+    gameTableStmt.run(table.id, lang, table.narratorId, table.intro , table.title, table.system, installedModules)
   }
 
   // insert table settings (configurações padrão de cada mesa, por língua)
@@ -517,16 +775,7 @@ modifierNarrationsNPCs,
   const locationIds = new Set<string>()
   for (const modifierTableLocation of modifierTableLocations) {
     locationIds.add(modifierTableLocation.id)
-    let level = 0
-    let path = `/${modifierTableLocation.id}/`
-    if (modifierTableLocation.parent_id) {
-      const parent = db.prepare('SELECT id, level, path FROM table_locations WHERE id = ? AND lang = ?')
-        .get(modifierTableLocation.parent_id, lang) as { id: string; level: number; path: string } | undefined
-      if (parent) {
-        level = (parent.level ?? 0) + 1
-        path = `${parent.path}${modifierTableLocation.id}/`.replace(/\/{2,}/g, '/')
-      }
-    }
+    const { level, path } = resolveLocation(modifierTableLocation)
     const hexSizeM = modifierTableLocation.hex_size_m ?? null
     const isBattlemap = modifierTableLocation.is_battlemap ?? (hexSizeM != null && hexSizeM <= 2 ? 1 : 0)
     const bgImage = isBattlemap
@@ -912,82 +1161,19 @@ modifierNarrationsNPCs,
   }
 }
 
-// ------------------------------------------------------------
-// CATÁLOGO GLOBAL (content_*)
-// Fonte única dos pacotes (module_id preenchido) para o wizard e
-// para installContent. Cada conceito vira 2 linhas (en/pt) com a
-// coluna lang derivada da fonte localizável.
-// ------------------------------------------------------------
+// Os kits e o catálogo já foram semeados por idioma dentro do loop das
+// variantes. As mesas de exemplo apenas instalam esses kits (modules) e
+// recebem linhas com os mesmos ids — nada é derivado das mesas aqui.
 
-db.exec(`
-  INSERT OR IGNORE INTO content_skills
-    (id, lang, name, category, subcategory, type, predefinition_type, predefinition_difficulty, description, module_id)
-  SELECT id, lang, name, category, subcategory, type, predefinition_type, predefinition_difficulty, description, module_id
-  FROM game_table_skills WHERE module_id IS NOT NULL
-`)
-
-db.exec(`
-  INSERT OR IGNORE INTO content_items
-    (id, lang, name, kind, category, weight_lb, cost, dimensions, description, quality, condition, module_id, subcategory, tech_level)
-  SELECT id, lang, name, kind, category, weight_lb, cost, dimensions, description, quality, condition, module_id, subcategory, tech_level
-  FROM game_table_items WHERE module_id IS NOT NULL
-`)
-
-db.exec(`
-  INSERT OR IGNORE INTO content_weapons (id, lang, item_id, skill, min_st, rated_st, handedness, reach, parry, block, fit)
-  SELECT w.id, w.lang, w.item_id, w.skill, w.min_st, w.rated_st, w.handedness, w.reach, w.parry, w.block, w.fit
-  FROM game_table_weapons w
-  JOIN game_table_items i ON i.id = w.item_id AND i.lang = w.lang AND i.module_id IS NOT NULL
-`)
-
-db.exec(`
-  INSERT OR IGNORE INTO content_weapon_attacks
-    (id, lang, weapon_id, name, usage, damage_source, damage_modifier, damage_dice, damage_type, armor_penetration, accuracy, range, recoil, shots)
-  SELECT a.id, a.lang, a.weapon_id, a.name, a.usage, a.damage_source, a.damage_modifier, a.damage_dice, a.damage_type, a.armor_penetration, a.accuracy, a.range, a.recoil, a.shots
-  FROM weapon_attacks a
-  JOIN content_weapons w ON w.id = a.weapon_id AND w.lang = a.lang
-`)
-
-db.exec(`
-  INSERT OR IGNORE INTO content_armors (id, lang, item_id, dr, flex, locations, fit)
-  SELECT ar.id, ar.lang, ar.item_id, ar.dr, ar.flex, ar.locations, ar.fit
-  FROM game_table_armors ar
-  JOIN game_table_items i ON i.id = ar.item_id AND i.lang = ar.lang AND i.module_id IS NOT NULL
-`)
-
-db.exec(`
-  INSERT OR IGNORE INTO content_advantages (id, lang, name, category, subcategory, cost_points, description, module_id)
-  SELECT id, lang, name, category, subcategory, cost_points, description, module_id
-  FROM game_table_advantages WHERE module_id IS NOT NULL
-`)
-
-db.exec(`
-  INSERT OR IGNORE INTO content_disadvantages (id, lang, name, category, subcategory, cost_points, effect, description, module_id)
-  SELECT id, lang, name, category, subcategory, cost_points, effect, description, module_id
-  FROM game_table_disadvantages WHERE module_id IS NOT NULL
-`)
-
-db.exec(`
-  INSERT OR IGNORE INTO content_npcs
-    (id, lang, name, bio, backstory, points, hp, st, dx, iq, ht, fatigue, encumbrance, status, module_id, category, subcategory)
-  SELECT n.id, COALESCE(s.lang, 'pt'), s.name, s.bio, s.backstory, s.points, s.hp, s.st, s.dx, s.iq, s.ht, s.fatigue, s.encumbrance,
-         n.status, n.module_id, n.category, n.subcategory
-  FROM game_table_npcs n
-  LEFT JOIN game_table_characters c ON c.id = n.character_id
-  LEFT JOIN game_table_character_sheets s ON s.character_id = c.id
-  WHERE n.module_id IS NOT NULL
-`)
-
-// As duas mesas alimentam o catálogo de locais (en + pt).
-db.exec(`
-  INSERT OR IGNORE INTO content_locations
-    (id, lang, parent_id, kind, level, path, name, region, address, sub_region, is_indoor, other, country, area, dimensions, description,
-     hex_size_m, width_hexes, height_hexes, center_q, center_r, orientation, rotation_deg, is_battlemap, shop_name, tiles, drawing)
-  SELECT id, lang, parent_id, kind, level, path, name, region, address, sub_region, is_indoor, other, country, area, dimensions, description,
-         hex_size_m, width_hexes, height_hexes, center_q, center_r, orientation, rotation_deg, is_battlemap, shop_name, tiles, drawing
-  FROM table_locations
-  WHERE table_id IN (SELECT table_id FROM game_tables)
-`)
+// weapon -> skill: as armas e itens acabaram de ser reinseridos sem skill_id.
+// Resolve aqui, ainda dentro da transação, para a ficha já nascer com o
+// vínculo arma->perícia (a migration roda antes do wipe e não adianta).
+const weaponSkills = resolveWeaponSkills()
+if (weaponSkills.resolved || weaponSkills.unresolved) {
+  console.log(
+    `🔗 weapon->skill (seed): ${weaponSkills.resolved} resolvida(s), ${weaponSkills.unresolved} sem match`
+  )
+}
 
 db.exec('COMMIT')
 db.exec('PRAGMA foreign_keys = ON')

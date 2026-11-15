@@ -58,6 +58,11 @@ const ptBase: Record<string, string> = {
     "f.titlePh": "ex: As Crônicas de Marvengard",
     "f.system": "Sistema",
     "f.systemLocked": "Por enquanto o sistema é fixo no GURPS — em breve será possível escolher.",
+    "f.catalogLang": "Idioma do catálogo",
+    "f.catalogLangPt": "Português (PT)",
+    "f.catalogLangEn": "English (EN)",
+    "f.catalogLangHint":
+      "A mesa instala apenas conteúdo do idioma do catálogo atual. Troque o idioma no topo para montar a mesa com o outro acervo.",
     "f.intro": "Introdução",
     "f.introPh": "Uma frase para apresentar o mundo aos jogadores.",
     "s2.hint":
@@ -435,6 +440,11 @@ const enBase: Record<string, string> = {
     "f.titlePh": "e.g. The Chronicles of Marvengard",
     "f.system": "System",
     "f.systemLocked": "For now the system is fixed to GURPS — choosing will be available soon.",
+    "f.catalogLang": "Catalog language",
+    "f.catalogLangPt": "Português (PT)",
+    "f.catalogLangEn": "English (EN)",
+    "f.catalogLangHint":
+      "The table installs content from the current catalog language only. Switch the language at the top to build the table from the other catalog.",
     "f.intro": "Intro",
     "f.introPh": "One line to pitch the world to the players.",
     "s2.hint": "Optional — you can start empty and add content later.",

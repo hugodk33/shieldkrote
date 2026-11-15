@@ -44,36 +44,36 @@ export const contentModules: ContentModuleSeed[] = [
   {
     id: 'fantasy',
     slug: 'fantasy',
-    name: 'Módulo Básico',
+    name: 'Basic Set',
     techLevel: 'TL0–3',
-    description: 'O kit básico do GURPS: reinos, heróis, magia e aventura. Combate, magia e o essencial para qualquer mesa clássica — pronto para jogar.',
+    description: 'The GURPS starter kit: kingdoms, heroes, magic and adventure. Combat, magic and the essentials for any classic table — ready to play.',
     accent: '#a78bfa',
     sort: 1
   },
   {
     id: 'low-tech',
     slug: 'low-tech',
-    name: 'Aventuras Antigas',
+    name: 'Ancient Adventures',
     techLevel: 'TL0–4',
-    description: 'O kit histórico e realista antes da pólvora: ofícios rústicos, animais, vela e primitivismo.',
+    description: 'The historical, realistic kit before gunpowder: rustic crafts, animals, sail and primitivism.',
     accent: '#fbbf24',
     sort: 2
   },
   {
     id: 'mid-tech',
     slug: 'mid-tech',
-    name: 'Pólvora & Vapor',
+    name: 'Powder & Steam',
     techLevel: 'TL5–7',
-    description: 'Rifles, telégrafos, automóveis, mecânica e os primeiros computadores.',
+    description: 'Rifles, telegraphs, automobiles, mechanics and the first computers.',
     accent: '#f97316',
     sort: 3
   },
   {
     id: 'cyberpunk',
     slug: 'cyberpunk',
-    name: 'Cyberpunk & Espaço',
+    name: 'Cyberpunk & Space',
     techLevel: 'TL8–9',
-    description: 'Armeiros de feixe, trajes de combate, genética, espionagem e navegação estelar.',
+    description: 'Beam weapons, combat suits, genetics, espionage and star navigation.',
     accent: '#22d3ee',
     sort: 4
   }
