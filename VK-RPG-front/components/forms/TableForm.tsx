@@ -5,21 +5,19 @@ import { useRouter } from "next/navigation";
 import { submitJson } from "./submit";
 import { cancelCls, inputCls, labelCls, submitCls } from "./formStyles";
 import { useTranslation } from "@/lib/i18n";
+import { readPerspective } from "@/lib/side";
 
 export interface TableFormProps {
   initial?: { id: string; title: string; system: string; intro: string };
-  narratorOptions: Array<{ id: string; name: string }>;
-  defaultNarratorId?: string;
 }
 
-export default function TableForm({ initial, narratorOptions, defaultNarratorId }: TableFormProps) {
+export default function TableForm({ initial }: TableFormProps) {
   const router = useRouter();
   const { t } = useTranslation();
   const isEdit = !!initial;
   const [title, setTitle] = useState(initial?.title ?? "");
   const [system, setSystem] = useState(initial?.system ?? "");
   const [intro, setIntro] = useState(initial?.intro ?? "");
-  const [narratorId, setNarratorId] = useState(defaultNarratorId ?? narratorOptions[0]?.id ?? "");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -34,7 +32,7 @@ export default function TableForm({ initial, narratorOptions, defaultNarratorId 
         router.refresh();
       } else {
         const result = await submitJson<{ id: string }>("/api/create-game-table", "POST", {
-          narratorId,
+          actor: readPerspective().actor,
           title,
           system,
           intro,
@@ -55,27 +53,6 @@ export default function TableForm({ initial, narratorOptions, defaultNarratorId 
           {isEdit ? t("fr.table.editTitle") : t("fr.table.newTitle")}
         </h1>
         <form onSubmit={handleSubmit} className="space-y-5">
-          {!isEdit && (
-            <div>
-              <label className={labelCls}>{t("fr.narrator")}</label>
-              <select
-                value={narratorId}
-                onChange={(e) => setNarratorId(e.target.value)}
-                required
-                className={inputCls}
-              >
-                <option value="" disabled>
-                  {t("fr.pickNarrator")}
-                </option>
-                {narratorOptions.map((n) => (
-                  <option key={n.id} value={n.id}>
-                    {n.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
-
           <div>
             <label className={labelCls}>{t("fr.campaignTitle")}</label>
             <input

@@ -26,7 +26,6 @@ export default async function EditTablePage({ params }: { params: Promise<{ id: 
         system: table.system ?? "",
         intro: table.intro ?? "",
       }}
-      narratorOptions={[]}
     />
   );
 }

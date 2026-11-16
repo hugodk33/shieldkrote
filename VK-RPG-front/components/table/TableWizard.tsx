@@ -24,8 +24,8 @@ const mono = "font-mono uppercase tracking-widest text-[11px]";
 const EMPTY_REFS: ContentReference[] = [];
 
 interface TableWizardProps {
-  narratorOptions: Array<{ id: string; name: string }>;
-  defaultNarratorId?: string;
+  /** Usuário logado (id) — dono da mesa que está sendo criada. */
+  actorId: string | null;
   catalog: ContentCatalog | null;
   /** Catalog language of the table being created (`en` | `pt`). */
   lang: string;
@@ -157,10 +157,9 @@ function TypeHeader({
   );
 }
 
-export default function TableWizard({ narratorOptions, defaultNarratorId, catalog, lang }: TableWizardProps) {
+export default function TableWizard({ actorId, catalog, lang }: TableWizardProps) {
   const router = useRouter();
   const [step, setStep] = useState(1);
-  const [narratorId, setNarratorId] = useState(defaultNarratorId ?? narratorOptions[0]?.id ?? "");
   const [title, setTitle] = useState("");
   const [intro, setIntro] = useState("");
   const [sel, setSel] = useState<Set<string>>(new Set());
@@ -294,7 +293,7 @@ export default function TableWizard({ narratorOptions, defaultNarratorId, catalo
       ? t("s2.selectedZero")
       : interpolate(t("s2.selectedMany"), { n: totalSelected });
 
-  const baseComplete = title.trim().length > 0 && narratorId.length > 0;
+  const baseComplete = title.trim().length > 0 && !!actorId;
   const canContinue = (to: number) => to === 1 || baseComplete;
 
   const go = (to: number) => {
@@ -321,7 +320,8 @@ export default function TableWizard({ narratorOptions, defaultNarratorId, catalo
       const references = [...byDomain.entries()].map(([domain, ids]) => ({ domain, ids }));
 
       const payload = {
-        narratorId,
+        /* O backend resolve/cria o registro de narrador a partir do usuário. */
+        actor: actorId,
         lang,
         title: title.trim(),
         system: "GURPS",
@@ -458,25 +458,6 @@ export default function TableWizard({ narratorOptions, defaultNarratorId, catalo
       <main>
         {step === 1 && (
           <section className="space-y-5">
-            <div>
-              <label className={fieldLabel}>{t("f.narrator")}</label>
-              <select
-                value={narratorId}
-                onChange={(e) => setNarratorId(e.target.value)}
-                required
-                className={fieldInput}
-              >
-                <option value="" disabled className="bg-zinc-950">
-                  {t("f.narratorPh")}
-                </option>
-                {narratorOptions.map((n) => (
-                  <option key={n.id} value={n.id} className="bg-zinc-950">
-                    {n.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
             <div>
               <label className={fieldLabel}>{t("f.titleField")}</label>
               <input

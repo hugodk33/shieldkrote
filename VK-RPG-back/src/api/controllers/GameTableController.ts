@@ -24,8 +24,21 @@ export class GameTableController {
   ) {}
 
   async create(req: Request, res: Response) {
-    const user = await this.createGameTableUseCase.execute(req.body)
-    return res.json(user)
+    try {
+      /* Quem cria a mesa é o usuário da sessão (`actor`). O vínculo com
+         `narrators` é resolvido — ou criado — pelo caso de uso. */
+      const queryActor = typeof req.query?.actor === 'string' ? req.query.actor : null
+      const bodyActor = typeof req.body?.actor === 'string' ? req.body.actor : null
+      const headerActor = typeof req.headers['x-actor'] === 'string' ? req.headers['x-actor'] : null
+
+      const result = await this.createGameTableUseCase.execute({
+        ...req.body,
+        actorId: queryActor || bodyActor || headerActor || null
+      })
+      return res.json(result)
+    } catch (e: any) {
+      return res.status(e?.status ?? 500).json({ error: e?.message ?? 'Erro ao criar a mesa.' })
+    }
   }
 
   async findById(req: Request, res: Response) {

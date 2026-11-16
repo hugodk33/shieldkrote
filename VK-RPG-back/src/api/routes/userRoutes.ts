@@ -184,7 +184,7 @@ const userController =
     );  
 
 /* GAME TABLE */
-const createGameTableUseCase = new CreateGameTableUseCase(gameTableRepo, contentCatalogRepo)
+const createGameTableUseCase = new CreateGameTableUseCase(gameTableRepo, repo, narratorRepo, contentCatalogRepo)
 const findGameTableUseCase = new FindGameTableUseCase(gameTableRepo)
 const findAllGameTablesUseCase = new FindAllGameTablesUseCase(gameTableRepo)
 const findAllGameTableScenesUseCase = new FindAllGameTableScenesUseCase(gameTableRepo)
