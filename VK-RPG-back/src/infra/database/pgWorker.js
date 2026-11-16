@@ -79,7 +79,6 @@ async function openClient() {
 
   await c.query("SET client_encoding = 'UTF8'")
   await c.query("SET TIME ZONE 'UTC'")
-
   // COLLATE NOCASE do SQLite -> collation ICU case-insensitive do Postgres.
   try {
     await c.query(
@@ -91,7 +90,28 @@ async function openClient() {
     console.warn('[pg] collation "nocase" indisponível; COLLATE NOCASE será ignorado')
   }
 
+  // Se o servidor derrubar a conexão (restart do Postgres, pg_terminate_backend
+  // vindo do DBeaver...), o Client fica inutilizável e as queries seguintes
+  // nunca resolvem. Descartamos para reconectar na próxima chamada.
+  c.on('error', () => {
+    if (client === c) client = null
+    connecting = null
+  })
+
   return c
+}
+
+/* Erros que significam "a conexão morreu" e não "a query falhou". */
+const CONNECTION_ERROR_CODES = new Set([
+  '57P01', '57P02', '57P03', '08000', '08001', '08003', '08004', '08006',
+  'ECONNRESET', 'EPIPE', 'ETIMEDOUT', 'ENOTFOUND'
+])
+
+function isConnectionError(error) {
+  if (!error) return false
+  if (error.code && CONNECTION_ERROR_CODES.has(error.code)) return true
+  const message = String(error.message || '')
+  return /Connection terminated|connection error|not queryable|Client was closed/i.test(message)
 }
 
 async function db() {
@@ -532,6 +552,12 @@ parentPort.on('message', (message) => {
   handle(message)
     .then((result) => send(result))
     .catch((error) => {
+      // Conexão morta: joga fora o client para a próxima query reconectar.
+      if (isConnectionError(error)) {
+        client = null
+        connecting = null
+        depth = 0
+      }
       send({
         ok: false,
         error: {

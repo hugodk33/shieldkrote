@@ -9,6 +9,10 @@
  *
  * Consequência: as queries são serializadas (uma conexão só), exatamente como
  * o SQLite fazia. Para um MVP é o comportamento esperado.
+ *
+ * Resiliência: se o worker morrer ou parar de responder (ex.: restart do
+ * Postgres, `pg_terminate_backend` vindo do DBeaver), a conexão é recriada na
+ * chamada seguinte em vez de o processo inteiro ficar pendurado.
  */
 import { Worker } from 'node:worker_threads'
 import fs from 'node:fs'
@@ -18,7 +22,7 @@ const STATE = 0
 const LENGTH = 1
 const LAST = 2
 const CHUNK_SIZE = 4 * 1024 * 1024
-const TIMEOUT_MS = 180_000
+const TIMEOUT_MS = 30_000
 
 /** Lê `.env` (cwd e cwd/VK-RPG-back) sem adicionar dependência. */
 function loadEnv(): void {
@@ -89,15 +93,26 @@ interface WorkerPayload {
 }
 
 export class PgSyncConnection {
-  private readonly worker: Worker
-  private readonly control: Int32Array
-  private readonly buffer: Uint8Array
+  private worker!: Worker
+  private control!: Int32Array
+  private buffer!: Uint8Array
   private readonly workerError: { value: Error | null } = { value: null }
+  private worn = false
+  private generation = 0
 
   constructor() {
+    this.spawn()
+  }
+
+  /** Cria (ou recria) o worker que segura a conexão com o Postgres. */
+  private spawn(): void {
+    this.generation += 1
+    const generation = this.generation
     const shared = new SharedArrayBuffer(16 + CHUNK_SIZE)
     this.control = new Int32Array(shared, 0, 4)
     this.buffer = new Uint8Array(shared, 16)
+    this.workerError.value = null
+    this.worn = false
 
     this.worker = new Worker(resolveWorkerPath(), {
       workerData: { sab: shared, databaseUrl: resolveDatabaseUrl() },
@@ -105,11 +120,32 @@ export class PgSyncConnection {
     // Não segura o processo aberto (o SQLite também não segurava).
     this.worker.unref()
     this.worker.on('error', (error: Error) => {
+      if (generation !== this.generation) return
       this.workerError.value = error
+      this.worn = true
+    })
+    this.worker.on('exit', (code: number) => {
+      if (generation !== this.generation) return
+      if (code !== 0) {
+        this.workerError.value = new Error(`Worker do PostgreSQL encerrou (código ${code}).`)
+      }
+      this.worn = true
     })
   }
 
+  /** Descarta o worker atual e abre uma conexão nova. */
+  private recycle(): void {
+    this.worn = true
+    try {
+      void this.worker.terminate()
+    } catch {
+      /* já morreu */
+    }
+    this.spawn()
+  }
+
   private request(message: Record<string, unknown>): WorkerPayload {
+    if (this.worn) this.recycle()
     if (this.workerError.value) throw this.workerError.value
 
     Atomics.store(this.control, STATE, 0)
@@ -120,10 +156,14 @@ export class PgSyncConnection {
       if (Atomics.load(this.control, STATE) !== 1) {
         const waited = Atomics.wait(this.control, STATE, 0, TIMEOUT_MS)
         if (waited === 'timed-out') {
-          throw new Error('Timeout ao consultar o PostgreSQL (worker não respondeu).')
+          this.recycle()
+          throw new Error('Timeout ao consultar o PostgreSQL (conexão reiniciada).')
         }
       }
-      if (this.workerError.value) throw this.workerError.value
+      if (this.workerError.value) {
+        this.worn = true
+        throw this.workerError.value
+      }
 
       const length = Atomics.load(this.control, LENGTH)
       const isLast = Atomics.load(this.control, LAST)
