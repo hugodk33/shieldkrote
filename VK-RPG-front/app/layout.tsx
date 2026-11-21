@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { Geist, Geist_Mono } from "next/font/google";
 import Header from "@/components/Header";
-import PerspectiveSwitch from "@/components/PerspectiveSwitch";
 import { getSeatedUserId, getSessionUsername } from "@/lib/actor";
 import { I18nProvider } from "@/lib/i18n";
 import { DEFAULT_LANG, langFromCookieValue } from "@/lib/i18n-core";
@@ -41,7 +40,6 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
         <I18nProvider initialLang={lang}>
           <Header userId={userId} username={username} />
           <main className="flex-1">{children}</main>
-          <PerspectiveSwitch />
         </I18nProvider>
       </body>
     </html>

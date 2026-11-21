@@ -1,9 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { Boxes, LayoutGrid, LogIn, LogOut, ShieldCheck, UserRound } from "lucide-react";
+import { Boxes, LayoutGrid, Loader2, LogIn, LogOut, ShieldCheck, UserRound } from "lucide-react";
 import LanguageSwitch from "./LanguageSwitch";
 import { logout } from "@/lib/auth";
 import { useTranslation } from "@/lib/i18n";
@@ -26,17 +25,21 @@ export default function Header({
   username: string | null;
 }) {
   const { t } = useTranslation();
-  const router = useRouter();
-  const [busy, setBusy] = useState(false);
+  const signingOut = useRef(false);
+  const [leaving, setLeaving] = useState(false);
   const signedIn = Boolean(userId);
   const isSuperAdminSeat = username === SUPERADMIN_USERNAME;
 
   const signOut = () => {
-    if (busy) return;
-    setBusy(true);
+    if (signingOut.current) return;
+    signingOut.current = true;
+    setLeaving(true);
     logout();
-    router.replace("/");
-    router.refresh();
+    /* A sessão vive em cookies + localStorage. Uma navegação completa evita
+       a corrida entre `replace` e `refresh`, não deixa o botão preso em
+       `disabled` se o servidor demorar e garante que o layout já renderize
+       sem a identidade antiga. */
+    window.location.replace("/");
   };
 
   return (
@@ -136,10 +139,14 @@ export default function Header({
                 <button
                   type="button"
                   onClick={signOut}
-                  disabled={busy}
-                  className="inline-flex items-center gap-1.5 rounded-md border border-zinc-700/60 px-2.5 py-1.5 text-xs font-medium text-zinc-400 hover:border-zinc-500/70 hover:text-zinc-100 disabled:opacity-50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-500/50"
+                  aria-label={t("pg.nav.logout")}
+                  className="inline-flex items-center gap-1.5 rounded-md border border-zinc-700/60 px-2.5 py-1.5 text-xs font-medium text-zinc-400 hover:border-zinc-500/70 hover:text-zinc-100 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-500/50"
                 >
-                  <LogOut className="w-3.5 h-3.5" />
+                  {leaving ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    <LogOut className="w-3.5 h-3.5" />
+                  )}
                   <span className="hidden sm:inline">{t("pg.nav.logout")}</span>
                 </button>
               </>
