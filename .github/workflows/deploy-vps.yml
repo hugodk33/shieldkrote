@@ -1,0 +1,73 @@
+name: Deploy VPS
+
+# Dispara a cada push na master (inclusive o merge de PRs) e permite
+# disparo manual pelo botão "Run workflow" na aba Actions.
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+# Evita dois deploys simultântaneos na mesma VPS. Se um deploy estiver
+# rodando, o próximo fica na fila até ele terminar (não é cancelado).
+concurrency:
+  group: deploy-vps
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    name: Validar código
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: |
+            VK-RPG-front/package-lock.json
+            VK-RPG-back/package-lock.json
+
+      - name: Backend — dependências e typecheck
+        working-directory: VK-RPG-back
+        run: |
+          npm ci --no-audit --no-fund
+          npx tsc -p tsconfig.json --noEmit
+
+      - name: Frontend — dependências e build
+        working-directory: VK-RPG-front
+        env:
+          API_URL: http://127.0.0.1:3001
+          NODE_OPTIONS: --max-old-space-size=1536
+        run: |
+          npm ci --no-audit --no-fund
+          npm run build
+
+  deploy:
+    name: Deploy na VPS
+    needs: verify
+    runs-on: ubuntu-latest
+    steps:
+      - name: Preparar chave SSH
+        env:
+          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$VPS_SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+
+      - name: Rodar deploy.sh na VPS
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_PORT: ${{ secrets.VPS_PORT }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+        run: |
+          ssh -o StrictHostKeyChecking=accept-new \
+              -o IdentitiesOnly=yes \
+              -o BatchMode=yes \
+              -i ~/.ssh/deploy_key \
+              -p "$VPS_PORT" \
+              "$VPS_USER@$VPS_HOST" \
+              "bash /var/www/vkrpg/deploy.sh"
