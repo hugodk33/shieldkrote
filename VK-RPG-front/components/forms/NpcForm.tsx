@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import { seatActorQuery } from "@/lib/seat";
@@ -14,6 +14,7 @@ export interface NpcFormProps {
   tables?: Array<{ id: string; title: string }>;
   initial?: NpcViewer;
   defaultLocationId?: string;
+  children?: ReactNode;
 }
 
 const STATUSES = [
@@ -30,7 +31,7 @@ const ATTRS: Array<{ key: "st" | "dx" | "iq" | "ht"; label: string }> = [
   { key: "ht", label: "HT" },
 ];
 
-export default function NpcForm({ tableId, tables, initial, defaultLocationId }: NpcFormProps) {
+export default function NpcForm({ tableId, tables, initial, defaultLocationId, children }: NpcFormProps) {
   const router = useRouter();
   const { t } = useTranslation();
   const isEdit = !!initial;
@@ -191,6 +192,14 @@ export default function NpcForm({ tableId, tables, initial, defaultLocationId }:
               </div>
             ) : null}
           </div>
+
+          {children ? (
+            <div className="border-b border-zinc-700/40 pb-5">
+              <h2 className="text-lg font-semibold text-zinc-300 mb-1">{t("fr.ch.images")}</h2>
+              <p className="text-[11px] text-zinc-500 mb-4">{t("fr.npc.imagesHint")}</p>
+              {children}
+            </div>
+          ) : null}
 
           <div>
             <h2 className="text-lg font-semibold text-zinc-300 mb-4">{t("fr.attributes")}</h2>

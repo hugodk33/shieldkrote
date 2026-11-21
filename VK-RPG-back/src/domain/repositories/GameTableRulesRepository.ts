@@ -2845,6 +2845,7 @@ async findAllGameLocations(id: any, scope?: ViewerScope | string | null): Promis
         } : null,
         portraitUrl: characterImageMap([characterId]).get(characterId)?.portrait ?? null,
         bodyUrl: characterImageMap([characterId]).get(characterId)?.body ?? null,
+        images: galleryMap('game_table_character_images', 'character_id', [characterId]).get(characterId) ?? [],
         advantages,
         skills,
         items

@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { api } from "@/lib/api";
 import type { NpcViewer } from "@/lib/types";
 import NpcForm from "@/components/forms/NpcForm";
+import CharacterGallery from "@/components/gallery/CharacterGallery";
 
 export const dynamic = "force-dynamic";
 
@@ -16,5 +17,17 @@ export default async function EditNpcPage({ params }: { params: Promise<{ id: st
   }
   if (!data) notFound();
 
-  return <NpcForm initial={data} />;
+  const { character } = data;
+
+  return (
+    <NpcForm initial={data}>
+      <CharacterGallery
+        characterId={character.id}
+        name={character.sheet?.name ?? character.name ?? "NPC"}
+        portraitUrl={character.portraitUrl}
+        bodyUrl={character.bodyUrl}
+        images={character.images ?? []}
+      />
+    </NpcForm>
+  );
 }

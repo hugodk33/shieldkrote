@@ -121,34 +121,45 @@ export default function CharacterGallery({
     <>
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
         {slots.map((slot, i) => (
-          <button
-            key={`${slot.url}-${i}`}
-            type="button"
-            onClick={() => setActive(i)}
-            aria-label={labelFor(slot)}
-            className={`block overflow-hidden rounded-lg border border-zinc-700/60 bg-zinc-900 transition-colors hover:border-zinc-500 ${
-              slot.role === "body" ? "aspect-[3/4]" : "aspect-square"
-            }`}
-          >
-            <img
-              src={slot.url}
-              alt={`${name} ${i + 1}`}
-              className="h-full w-full object-cover transition-transform duration-300 hover:scale-105"
-            />
-          </button>
+          <div key={`${slot.url}-${i}`} className="min-w-0">
+            <button
+              type="button"
+              onClick={() => setActive(i)}
+              aria-label={labelFor(slot)}
+              title={labelFor(slot)}
+              className={`block w-full overflow-hidden rounded-lg border border-zinc-700/60 bg-zinc-900 transition-colors hover:border-zinc-500 ${
+                slot.role === "body" ? "aspect-[3/4]" : "aspect-square"
+              }`}
+            >
+              <img
+                src={slot.url}
+                alt={`${name} — ${labelFor(slot)}`}
+                className="h-full w-full object-cover transition-transform duration-300 hover:scale-105"
+              />
+            </button>
+            <p className="mt-1 truncate text-center font-mono text-[10px] uppercase tracking-wider text-zinc-500">
+              {labelFor(slot)}
+            </p>
+          </div>
         ))}
 
         {manage ? (
-          <button
-            type="button"
-            onClick={() => setActive(0)}
-            aria-label={t("fr.gallery.add")}
-            className="flex aspect-square items-center justify-center rounded-lg border border-dashed border-zinc-700/60 bg-zinc-900/40 text-zinc-500 transition-colors hover:border-zinc-500 hover:text-zinc-300"
-          >
-            <svg className="h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
-            </svg>
-          </button>
+          <div className="min-w-0">
+            <button
+              type="button"
+              onClick={() => setActive(0)}
+              aria-label={t("fr.gallery.add")}
+              title={t("fr.gallery.add")}
+              className="flex aspect-square w-full items-center justify-center rounded-lg border border-dashed border-zinc-700/60 bg-zinc-900/40 text-zinc-500 transition-colors hover:border-zinc-500 hover:text-zinc-300"
+            >
+              <svg className="h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+              </svg>
+            </button>
+            <p className="mt-1 truncate text-center font-mono text-[10px] uppercase tracking-wider text-zinc-500">
+              {t("fr.gallery.add")}
+            </p>
+          </div>
         ) : null}
       </div>
 
