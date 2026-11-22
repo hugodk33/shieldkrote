@@ -419,16 +419,14 @@ export function CurrentMapStrip({
     node.kind && KNOWN_KINDS.has(node.kind) ? t(`tp.locKind.${node.kind}`) : t("tp.locKind.generic");
   const childCount = node.children?.length ?? 0;
   const members = group && group.length > 1 ? group : null;
-  /* A imagem de capa (ou, na falta dela, a primeira da galeria) ocupa o
-     lugar do ícone no topo da trilha, exatamente como o mapa pintado. */
-  const heroUrl = node.bannerUrl || node.images?.[0] || null;
+  /* Só a imagem DO MAPA (fundo da placa) aparece no topo da trilha — nunca
+     a imagem de capa, que pertence à ficha do local. Sem mapa, fica o ícone. */
   const hasPlate =
     (node.tiles?.length ?? 0) > 0 ||
     (node.drawing?.length ?? 0) > 0 ||
-    !!node.bgImageUrl ||
-    !!heroUrl;
-  const [heroZoom, setHeroZoom] = useState(1);
-  useEffect(() => { setHeroZoom(1); }, [node.id]);
+    !!node.bgImageUrl;
+  const [mapZoom, setMapZoom] = useState(1);
+  useEffect(() => { setMapZoom(1); }, [node.id]);
   const glyphTint = player
     ? (PLAYER_KIND_TINT[node.kind ?? ""] ?? KIND_TINT[node.kind ?? "site"] ?? "text-zinc-500")
     : (KIND_TINT[node.kind ?? "site"] ?? "text-zinc-500");
@@ -515,24 +513,15 @@ export function CurrentMapStrip({
         <div className="w-full">
           {hasPlate ? (
             <div className="relative aspect-[7/2] w-full overflow-hidden rounded-lg border border-zinc-700/40 bg-zinc-950/50">
-              {heroUrl ? (
-                <img
-                  src={heroUrl}
-                  alt={node.name || ""}
-                  className="absolute inset-0 h-full w-full object-cover"
-                  style={{ transform: `scale(${heroZoom})` }}
-                />
-              ) : (
-                <AtlasMapColumn
-                  node={node}
-                  label={t("lc.lmap.aria")}
-                  boxW={560}
-                  boxH={160}
-                  fullWidth
-                  zoom={heroZoom}
-                />
-              )}
-              <ZoomControls zoom={heroZoom} onZoom={setHeroZoom} />
+              <AtlasMapColumn
+                node={node}
+                label={t("lc.lmap.aria")}
+                boxW={560}
+                boxH={160}
+                fullWidth
+                zoom={mapZoom}
+              />
+              <ZoomControls zoom={mapZoom} onZoom={setMapZoom} />
             </div>
           ) : (
             <div
