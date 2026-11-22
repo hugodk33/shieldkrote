@@ -142,9 +142,17 @@ export default function TableCharactersPage({ params }: { params: Promise<{ id: 
                 >
                   <div className="flex items-center justify-between gap-3">
                     <div className="flex items-center gap-3 min-w-0">
-                      <svg className="w-4 h-4 shrink-0 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                      </svg>
+                      {ch.portraitUrl ? (
+                        <img
+                          src={ch.portraitUrl}
+                          alt=""
+                          className="w-10 h-10 shrink-0 rounded-md border border-zinc-700/60 bg-zinc-900 object-cover"
+                        />
+                      ) : (
+                        <svg className="w-4 h-4 shrink-0 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                      )}
                       <div className="min-w-0">
                         <Link
                           href={`/character/${ch.id}`}
@@ -198,9 +206,17 @@ export default function TableCharactersPage({ params }: { params: Promise<{ id: 
               >
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex items-center gap-3 min-w-0">
-                    <svg className="w-4 h-4 shrink-0 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                    </svg>
+                    {ch.portraitUrl ? (
+                      <img
+                        src={ch.portraitUrl}
+                        alt=""
+                        className="w-10 h-10 shrink-0 rounded-md border border-zinc-700/60 bg-zinc-900 object-cover"
+                      />
+                    ) : (
+                      <svg className="w-4 h-4 shrink-0 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                      </svg>
+                    )}
                     <div className="min-w-0">
                       <Link
                         href={`/character/${ch.id}`}

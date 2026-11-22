@@ -183,11 +183,13 @@ export default async function TableOverviewPage({ params }: { params: Promise<{ 
         };
         if (!c?.id) return base;
         const viewer = await api<CharacterViewer>(`/game-table-character/${c.id}`).catch(() => null);
+        const portraitUrl = viewer?.character?.portraitUrl ?? null;
         const sheet = viewer?.character?.sheet;
-        if (!sheet) return base;
+        if (!sheet) return { ...base, portraitUrl };
         const effects = viewer?.character?.active_effects ?? [];
         return {
           ...base,
+          portraitUrl,
           hasSheet: true,
           points: sheet.points,
           base: sheet.base_hp ?? sheet.hp ?? 0,
@@ -213,10 +215,12 @@ export default async function TableOverviewPage({ params }: { params: Promise<{ 
       };
       if (!n.character_id) return base;
       const viewer = await api<CharacterViewer>(`/game-table-character/${n.character_id}`).catch(() => null);
+      const portraitUrl = viewer?.character?.portraitUrl ?? null;
       const sheet = viewer?.character?.sheet;
-      if (!sheet) return base;
+      if (!sheet) return { ...base, portraitUrl };
       return {
         ...base,
+        portraitUrl,
         hasSheet: true,
         points: sheet.points,
         base: sheet.base_hp ?? sheet.hp ?? 0,

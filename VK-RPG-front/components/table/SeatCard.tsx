@@ -24,6 +24,8 @@ export interface SeatData {
   id: string;
   name: string;
   owner: string;
+  /** Retrato do personagem — quando existe, vira um quadrado na lateral do card. */
+  portraitUrl?: string | null;
   points?: number;
   base?: number;
   current?: number;
@@ -56,34 +58,43 @@ export default function SeatCard({ s, hue }: { s: SeatData; hue?: Hue }) {
             {s.owner}
           </span>
         </div>
-        {linkable ? (
-          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity relative z-10">
-            <Link
-              href={`/character/${s.id}`}
-              title={t("tp.seat.openSheet")}
-              aria-label={t("tp.seat.openSheet")}
-              className={actionCls}
-            >
-              <FileText className="w-3.5 h-3.5" strokeWidth={1.75} />
-            </Link>
-            <Link
-              href={`/character/${s.id}/edit`}
-              title={t("tp.seat.editSheet")}
-              aria-label={t("tp.seat.editSheet")}
-              className={actionCls}
-            >
-              <Pencil className="w-3.5 h-3.5" strokeWidth={1.75} />
-            </Link>
-            <Link
-              href={`/character/${s.id}?visibility=1`}
-              title={t("tp.seat.visibility")}
-              aria-label={t("tp.seat.visibility")}
-              className={actionCls}
-            >
-              <Eye className="w-3.5 h-3.5" strokeWidth={1.75} />
-            </Link>
-          </div>
-        ) : null}
+        <div className="flex items-center gap-2 shrink-0">
+          {s.portraitUrl ? (
+            <img
+              src={s.portraitUrl}
+              alt=""
+              className="w-10 h-10 rounded-md border border-zinc-700/60 bg-zinc-900 object-cover"
+            />
+          ) : null}
+          {linkable ? (
+            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity relative z-10">
+              <Link
+                href={`/character/${s.id}`}
+                title={t("tp.seat.openSheet")}
+                aria-label={t("tp.seat.openSheet")}
+                className={actionCls}
+              >
+                <FileText className="w-3.5 h-3.5" strokeWidth={1.75} />
+              </Link>
+              <Link
+                href={`/character/${s.id}/edit`}
+                title={t("tp.seat.editSheet")}
+                aria-label={t("tp.seat.editSheet")}
+                className={actionCls}
+              >
+                <Pencil className="w-3.5 h-3.5" strokeWidth={1.75} />
+              </Link>
+              <Link
+                href={`/character/${s.id}?visibility=1`}
+                title={t("tp.seat.visibility")}
+                aria-label={t("tp.seat.visibility")}
+                className={actionCls}
+              >
+                <Eye className="w-3.5 h-3.5" strokeWidth={1.75} />
+              </Link>
+            </div>
+          ) : null}
+        </div>
       </div>
 
       {s.hasSheet ? (
