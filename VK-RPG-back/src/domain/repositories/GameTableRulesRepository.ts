@@ -2000,12 +2000,17 @@ async findAllGameLocations(id: any, scope?: ViewerScope | string | null): Promis
       WHERE id = ?
     `).get(id as string)
 
-    const locations = (db.prepare(`
+    const locationRows = db.prepare(`
       SELECT *
       FROM table_locations
       WHERE table_id = ?
       ORDER BY path ASC, name ASC
-    `).all(id as string) as any[]).map(locationToDTO)
+    `).all(id as string) as any[]
+    const banners = locationRoleMap('banner', locationRows.map((l) => l.id as string))
+    const locations = locationRows.map((l) => ({
+      ...locationToDTO(l),
+      bannerUrl: banners.get(l.id) ?? null,
+    }))
 
     const { filter, characterId } = resolveViewerScope(scope)
 

@@ -11,16 +11,12 @@
    (set default, open the narrator page) are omitted.
    ============================================================ */
 
-import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import type { Location } from "@/lib/types";
-import { drawPlateBoard, drawPlateDrawing, paintCanvas, plateCanvas } from "@/lib/canvasgrid";
-import { useImageCache } from "@/lib/imagecache";
 import { interpolate, useTranslation } from "@/lib/i18n";
 import { floorPlanGroup } from "@/lib/location";
 import { KindGlyph, KIND_TINT } from "@/lib/location-glyphs";
 import CopyToTableButton from "@/components/table/CopyToTableButton";
-import ZoomControls from "@/components/map/ZoomControls";
 
 export const KNOWN_KINDS = new Set([
   "world",
@@ -318,67 +314,6 @@ export function LocationPlate({
   );
 }
 
-/* A coluna "estampa" do banner — o desenho (strokes + tiles) pintado no
-   MapStudio, renderizado compacto com o mesmo motor de canvas dos mapas.
-   Também recebe a imagem de fundo e os adesivos de imagem, para que o que
-   foi anexado à placa apareça aqui e não só na página de detalhe. */
-export function AtlasMapColumn({
-  node,
-  boxW = 176,
-  boxH = 112,
-  fullWidth = false,
-  label,
-  zoom = 1,
-}: {
-  node: Location;
-  boxW?: number;
-  boxH?: number;
-  fullWidth?: boolean;
-  label?: string;
-  zoom?: number;
-}) {
-  const ref = useRef<HTMLCanvasElement | null>(null);
-  const drawing = node.drawing ?? [];
-  const imageMap = useImageCache([
-    node.bgImageUrl,
-    ...drawing.filter((s) => s.type === "image").map((s) => s.src ?? null),
-  ]);
-  const bgImage = node.bgImageUrl ? imageMap.get(node.bgImageUrl) ?? null : null;
-
-  useEffect(() => {
-    const cv = ref.current;
-    if (!cv) return;
-    const tiles = node.tiles ?? [];
-    const { W, H, spec } = plateCanvas(node.hex ?? {}, 26, 34, 320, 240);
-    const fitScale = Math.min(boxW / W, boxH / H) * zoom;
-    const dx = (boxW - W * fitScale) / 2;
-    const dy = (boxH - H * fitScale) / 2;
-    paintCanvas(
-      cv,
-      W,
-      H,
-      (ctx) => {
-        drawPlateBoard(ctx, W, H, spec, tiles, { accent: "#38bdf8", bgImage });
-        drawPlateDrawing(ctx, W, H, spec, drawing, null, "#38bdf8", imageMap);
-      },
-      zoom,
-      { scale: fitScale, dx, dy, boxW, boxH }
-    );
-  }, [boxW, boxH, node, drawing, bgImage, imageMap, zoom]);
-
-  return (
-    <canvas
-      ref={ref}
-      width={boxW}
-      height={boxH}
-      role="img"
-      aria-label={label}
-      style={fullWidth ? { width: "100%", height: "auto", display: "block" } : { width: `${boxW}px`, height: `${boxH}px` }}
-      className="block touch-none select-none"
-    />
-  );
-}
-
 /* The "abertura" card: the current plate's banner + the region's
    sublocation selector pinned to its bottom — the same shape MapLog
    uses for the sublocation card. In sublocations the search box sits
@@ -419,14 +354,8 @@ export function CurrentMapStrip({
     node.kind && KNOWN_KINDS.has(node.kind) ? t(`tp.locKind.${node.kind}`) : t("tp.locKind.generic");
   const childCount = node.children?.length ?? 0;
   const members = group && group.length > 1 ? group : null;
-  /* Só a imagem DO MAPA (fundo da placa) aparece no topo da trilha — nunca
-     a imagem de capa, que pertence à ficha do local. Sem mapa, fica o ícone. */
-  const hasPlate =
-    (node.tiles?.length ?? 0) > 0 ||
-    (node.drawing?.length ?? 0) > 0 ||
-    !!node.bgImageUrl;
-  const [mapZoom, setMapZoom] = useState(1);
-  useEffect(() => { setMapZoom(1); }, [node.id]);
+  /* O topo da trilha mostra a capa da localidade; sem capa, fica o ícone. */
+  const coverUrl = node.bannerUrl ?? null;
   const glyphTint = player
     ? (PLAYER_KIND_TINT[node.kind ?? ""] ?? KIND_TINT[node.kind ?? "site"] ?? "text-zinc-500")
     : (KIND_TINT[node.kind ?? "site"] ?? "text-zinc-500");
@@ -511,17 +440,13 @@ export function CurrentMapStrip({
 </div>
 
         <div className="w-full">
-          {hasPlate ? (
-            <div className="relative aspect-[7/2] w-full overflow-hidden rounded-lg border border-zinc-700/40 bg-zinc-950/50">
-              <AtlasMapColumn
-                node={node}
-                label={t("lc.lmap.aria")}
-                boxW={560}
-                boxH={160}
-                fullWidth
-                zoom={mapZoom}
+          {coverUrl ? (
+            <div className="aspect-[7/2] w-full overflow-hidden rounded-lg border border-zinc-700/40 bg-zinc-950/50">
+              <img
+                src={coverUrl}
+                alt={node.name || ""}
+                className="h-full w-full object-cover"
               />
-              <ZoomControls zoom={mapZoom} onZoom={setMapZoom} />
             </div>
           ) : (
             <div
