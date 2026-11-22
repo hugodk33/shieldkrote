@@ -17,6 +17,7 @@ import {
   ZoomRuler,
 } from "@/components/location/locAtlas";
 import { atlasStripGroup } from "@/components/location/locAtlas";
+import WorldNet from "@/components/location/WorldNet";
 
 /* ============================================================
    Survey Atlas — the location list as an open atlas.
@@ -241,6 +242,13 @@ export default function LocationsAtlas({
             />
           ) : null}
           {active ? <ZoomRuler chain={active.chain} onJump={zoom} minZoomId={defaultId} /> : null}
+          {active && active.node.kind === "world" ? (
+            <WorldNet
+              node={active.node}
+              children={active.node.children ?? []}
+              onOpenChild={zoom}
+            />
+          ) : null}
           {plates.length === 0 ? (
             <div className="text-center py-12">
               <p className="text-zinc-500 text-sm">

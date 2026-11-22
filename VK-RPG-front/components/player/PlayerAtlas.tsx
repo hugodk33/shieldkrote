@@ -16,6 +16,7 @@ import Link from "next/link";
 import { interpolate, useTranslation } from "@/lib/i18n";
 import { absoluteHex } from "@/lib/location";
 import type { Location } from "@/lib/types";
+import { tacticalTilesOf } from "@/lib/worldnet";
 import LocationMap from "@/components/location/LocationMap";
 import {
   atlasStripGroup,
@@ -24,6 +25,7 @@ import {
   LocationPlate,
   ZoomRuler,
 } from "@/components/location/locAtlas";
+import WorldNet from "@/components/location/WorldNet";
 
 interface PlayerAtlasProps {
   tree: Location[];
@@ -68,7 +70,7 @@ export default function PlayerAtlas({ tree, defaultLocationId = null, currentLoc
   const canShowMap =
     !!active &&
     (!!active.node.isBattlemap ||
-      (active.node.tiles?.length ?? 0) > 0 ||
+      tacticalTilesOf(active.node.tiles).length > 0 ||
       (active.node.drawing?.length ?? 0) > 0);
   const activeAbs = useMemo(
     () =>
@@ -173,6 +175,14 @@ export default function PlayerAtlas({ tree, defaultLocationId = null, currentLoc
             />
           ) : null}
           {active ? <ZoomRuler chain={active.chain} onJump={zoom} player minZoomId={defaultLocationId} /> : null}
+          {active && active.node.kind === "world" ? (
+            <WorldNet
+              node={active.node}
+              children={active.node.children ?? []}
+              player
+              onOpenChild={zoom}
+            />
+          ) : null}
           {active ? (
             <div className="flex flex-wrap items-center gap-2">
               <Link
@@ -194,7 +204,7 @@ export default function PlayerAtlas({ tree, defaultLocationId = null, currentLoc
               hex={active.node.hex ?? null}
               abs={activeAbs}
               accent="#60a5fa"
-              tiles={active.node.tiles ?? []}
+              tiles={tacticalTilesOf(active.node.tiles)}
               drawing={active.node.drawing ?? []}
             />
           ) : null}
