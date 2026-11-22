@@ -228,30 +228,45 @@ export function LocationPlate({
   const glyphTint = player
     ? (PLAYER_KIND_TINT[node.kind ?? ""] ?? KIND_TINT[node.kind ?? "site"] ?? "text-zinc-500")
     : (KIND_TINT[node.kind ?? "site"] ?? "text-zinc-500");
+  /* Com capa, o card mostra a imagem e o botão de padrão em cima dela;
+     sem capa, mantém o glifo e o botão no canto superior direito. */
+  const coverUrl = node.bannerUrl ?? null;
+  const defaultButton = onSetDefault ? (
+    <button
+      type="button"
+      disabled={busy}
+      onClick={() => onSetDefault(node.id)}
+      title={isDefault ? t("tp.loc.defaultOn") : t("tp.loc.defaultSet")}
+      className={`inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 font-mono text-[9px] tracking-widest uppercase transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-600/60 disabled:opacity-40 hover:bg-white/5 ${
+        coverUrl ? "" : "absolute top-2 right-2 "
+      }${isDefault ? "text-amber-300/70" : "text-zinc-600 hover:text-amber-300/60"}`}
+    >
+      <svg className="w-2.5 h-2.5" viewBox="0 0 24 24" fill={isDefault ? "currentColor" : "none"} stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+      </svg>
+      <span>{t("tp.loc.default")}</span>
+    </button>
+  ) : null;
   return (
     <div className="group relative flex h-full flex-col items-center rounded-xl border border-zinc-700/40 bg-zinc-800/40 px-4 py-3.5 transition-all hover:bg-zinc-800/70 hover:border-zinc-600/60">
-      {onSetDefault ? (
-        <button
-          type="button"
-          disabled={busy}
-          onClick={() => onSetDefault(node.id)}
-          title={isDefault ? t("tp.loc.defaultOn") : t("tp.loc.defaultSet")}
-          className={`absolute top-2 right-2 inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 font-mono text-[9px] tracking-widest uppercase transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-600/60 disabled:opacity-40 hover:bg-white/5 ${
-            isDefault ? "text-amber-300/70" : "text-zinc-600 hover:text-amber-300/60"
-          }`}
-        >
-          <svg className="w-2.5 h-2.5" viewBox="0 0 24 24" fill={isDefault ? "currentColor" : "none"} stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-          </svg>
-          <span>{t("tp.loc.default")}</span>
-        </button>
-      ) : null}
-      <div className={`flex items-center justify-center shrink-0 ${glyphTint}`} aria-hidden>
-        <KindGlyph
-          kind={node.kind}
-          className="h-11 w-11 opacity-90 transition-all duration-300 group-hover:opacity-100"
-        />
-      </div>
+      {coverUrl ? (
+        <>
+          {defaultButton ? <div className="flex w-full justify-end">{defaultButton}</div> : null}
+          <div className="mt-2 aspect-[7/2] w-full overflow-hidden rounded-lg border border-zinc-700/40 bg-zinc-950/50">
+            <img src={coverUrl} alt={node.name || ""} className="h-full w-full object-cover" />
+          </div>
+        </>
+      ) : (
+        <>
+          {defaultButton}
+          <div className={`flex items-center justify-center shrink-0 ${glyphTint}`} aria-hidden>
+            <KindGlyph
+              kind={node.kind}
+              className="h-11 w-11 opacity-90 transition-all duration-300 group-hover:opacity-100"
+            />
+          </div>
+        </>
+      )}
 
       <div className="flex w-full min-w-0 flex-1 flex-col items-center text-center">
         <div className="flex flex-wrap items-center justify-center gap-1.5 mt-2">
