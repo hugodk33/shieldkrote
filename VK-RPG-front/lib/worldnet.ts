@@ -192,8 +192,10 @@ export function buildNetGeometry(opts: { S?: number; N?: number; pad?: number } 
     };
   });
 
-  const hexR = S / (N * 2.08);
-  const pentR = (S / N) * 0.56;
+  /* A malha de centros é triangular (passo S/N). Hexágonos pointy-top
+     com raio = passo/√3 tecem exatamente essa malha, sem falhas. */
+  const hexR = S / (N * Math.sqrt(3));
+  const pentR = hexR * 0.85;
   const cells: NetCell[] = [];
 
   for (const f of ICOSA_FACES) {

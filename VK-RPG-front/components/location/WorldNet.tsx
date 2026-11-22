@@ -41,7 +41,7 @@ interface WorldNetProps {
 function polygon(ctx: CanvasRenderingContext2D, c: NetCell): void {
   ctx.beginPath();
   const sides = c.shape === "pentagon" ? 5 : 6;
-  const start = c.shape === "pentagon" ? -Math.PI / 2 : 0;
+  const start = c.shape === "pentagon" ? -Math.PI / 2 : Math.PI / 6;
   for (let k = 0; k < sides; k++) {
     const a = start + (k * Math.PI * 2) / sides;
     const x = c.x + Math.cos(a) * c.r;
