@@ -137,22 +137,25 @@ export default function TableCharactersPage({ params }: { params: Promise<{ id: 
               return (
                 <div
                   key={ch.id}
-                  className="group relative block bg-zinc-800/40 hover:bg-zinc-800/70 border border-zinc-700/40 hover:border-zinc-600/60 rounded-lg border-l-[3px] px-4 py-3 transition-all"
+                  className="group relative flex overflow-hidden bg-zinc-800/40 hover:bg-zinc-800/70 border border-zinc-700/40 hover:border-zinc-600/60 rounded-lg border-l-[3px] transition-all"
                   style={{ borderLeftColor: ally ? "#34d399" : "#f87171" }}
                 >
+                  {ch.portraitUrl ? (
+                    <img
+                      src={ch.portraitUrl}
+                      alt=""
+                      className="h-full w-16 shrink-0 self-stretch border-r border-zinc-700/60 bg-zinc-900 object-cover"
+                    />
+                  ) : (
+                    <div className="flex w-16 shrink-0 items-center justify-center self-stretch border-r border-zinc-700/60 bg-zinc-900/40 text-sky-400">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                      </svg>
+                    </div>
+                  )}
+                  <div className="min-w-0 flex-1 px-4 py-3">
                   <div className="flex items-center justify-between gap-3">
                     <div className="flex items-center gap-3 min-w-0">
-                      {ch.portraitUrl ? (
-                        <img
-                          src={ch.portraitUrl}
-                          alt=""
-                          className="w-16 h-16 shrink-0 rounded-lg border border-zinc-700/60 bg-zinc-900 object-cover"
-                        />
-                      ) : (
-                        <svg className="w-4 h-4 shrink-0 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                        </svg>
-                      )}
                       <div className="min-w-0">
                         <Link
                           href={`/character/${ch.id}`}
@@ -196,27 +199,31 @@ export default function TableCharactersPage({ params }: { params: Promise<{ id: 
                       tableId={id}
                     />
                   </div>
+                  </div>
                 </div>
               );
             }
             return (
               <div
                 key={ch.id}
-                className="group relative block bg-zinc-800/40 hover:bg-zinc-800/70 border border-zinc-700/40 hover:border-zinc-600/60 rounded-lg border-l-[3px] border-l-violet-400/70 px-4 py-3 transition-all"
+                className="group relative flex overflow-hidden bg-zinc-800/40 hover:bg-zinc-800/70 border border-zinc-700/40 hover:border-zinc-600/60 rounded-lg border-l-[3px] border-l-violet-400/70 transition-all"
               >
+                {ch.portraitUrl ? (
+                  <img
+                    src={ch.portraitUrl}
+                    alt=""
+                    className="h-full w-1/5 shrink-0 self-stretch border-r border-zinc-700/60 bg-zinc-900 object-cover"
+                  />
+                ) : (
+                  <div className="flex w-1/5 shrink-0 items-center justify-center self-stretch border-r border-zinc-700/60 bg-zinc-900/40 text-violet-400">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                  </div>
+                )}
+                <div className="min-w-0 flex-1 px-4 py-3">
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex items-center gap-3 min-w-0">
-                    {ch.portraitUrl ? (
-                      <img
-                        src={ch.portraitUrl}
-                        alt=""
-                        className="w-16 h-16 shrink-0 rounded-lg border border-zinc-700/60 bg-zinc-900 object-cover"
-                      />
-                    ) : (
-                      <svg className="w-4 h-4 shrink-0 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                      </svg>
-                    )}
                     <div className="min-w-0">
                       <Link
                         href={`/character/${ch.id}`}
@@ -256,6 +263,7 @@ export default function TableCharactersPage({ params }: { params: Promise<{ id: 
                     copyHref={`/api/game-table-character/${ch.id}/copy`}
                     tableId={id}
                   />
+                </div>
                 </div>
               </div>
             );
