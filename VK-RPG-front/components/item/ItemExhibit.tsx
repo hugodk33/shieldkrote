@@ -202,7 +202,7 @@ export default function ItemExhibit({ item, tableId }: { item: Item; tableId?: s
                   <img
                     src={itemImage}
                     alt={item.name || t("itm.item")}
-                    className="h-16 w-16 rounded-lg border border-zinc-700/60 object-cover shrink-0"
+                    className="h-16 w-16 border border-zinc-700/60 object-cover shrink-0"
                   />
                 ) : null}
                 <h1 className="text-[clamp(26px,5vw,40px)] leading-none font-bold tracking-tight text-amber-100">

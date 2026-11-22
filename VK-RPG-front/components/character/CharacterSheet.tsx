@@ -589,7 +589,7 @@ export default function CharacterSheet({ data, visibility, showName = true, show
           ) : null}
         </div>
 
-        <div className="mt-6 pt-6 border-t border-zinc-700/40">
+        <div className="mt-3 pt-3">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div>
               <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-500 mb-3">
