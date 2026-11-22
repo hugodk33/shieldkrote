@@ -49,52 +49,50 @@ export default function SeatCard({ s, hue }: { s: SeatData; hue?: Hue }) {
   return (
     <div className="group relative flex flex-col w-full rounded-lg border border-zinc-700/40 bg-zinc-900/60 px-3.5 py-2.5 min-w-[15rem] hover:border-green-800/50 transition-colors">
       <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0">
-          <span className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full shrink-0" style={{ background: dot.dot, boxShadow: `0 0 6px ${dot.ring}` }} />
-            <span className="block text-sm font-medium text-zinc-200 leading-tight break-words">{s.name}</span>
-          </span>
-          <span className="block font-mono text-[9px] uppercase tracking-widest text-zinc-500 mt-0.5 ml-4 break-words">
-            {s.owner}
-          </span>
-        </div>
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-start gap-2 min-w-0">
+          <span className="w-2 h-2 rounded-full shrink-0 mt-1.5" style={{ background: dot.dot, boxShadow: `0 0 6px ${dot.ring}` }} />
           {s.portraitUrl ? (
             <img
               src={s.portraitUrl}
               alt=""
-              className="w-10 h-10 rounded-md border border-zinc-700/60 bg-zinc-900 object-cover"
+              className="w-10 h-10 shrink-0 rounded-md border border-zinc-700/60 bg-zinc-900 object-cover"
             />
           ) : null}
-          {linkable ? (
-            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity relative z-10">
-              <Link
-                href={`/character/${s.id}`}
-                title={t("tp.seat.openSheet")}
-                aria-label={t("tp.seat.openSheet")}
-                className={actionCls}
-              >
-                <FileText className="w-3.5 h-3.5" strokeWidth={1.75} />
-              </Link>
-              <Link
-                href={`/character/${s.id}/edit`}
-                title={t("tp.seat.editSheet")}
-                aria-label={t("tp.seat.editSheet")}
-                className={actionCls}
-              >
-                <Pencil className="w-3.5 h-3.5" strokeWidth={1.75} />
-              </Link>
-              <Link
-                href={`/character/${s.id}?visibility=1`}
-                title={t("tp.seat.visibility")}
-                aria-label={t("tp.seat.visibility")}
-                className={actionCls}
-              >
-                <Eye className="w-3.5 h-3.5" strokeWidth={1.75} />
-              </Link>
-            </div>
-          ) : null}
+          <div className="min-w-0">
+            <span className="block text-sm font-medium text-zinc-200 leading-tight break-words">{s.name}</span>
+            <span className="block font-mono text-[9px] uppercase tracking-widest text-zinc-500 mt-0.5 break-words">
+              {s.owner}
+            </span>
+          </div>
         </div>
+        {linkable ? (
+          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity relative z-10">
+            <Link
+              href={`/character/${s.id}`}
+              title={t("tp.seat.openSheet")}
+              aria-label={t("tp.seat.openSheet")}
+              className={actionCls}
+            >
+              <FileText className="w-3.5 h-3.5" strokeWidth={1.75} />
+            </Link>
+            <Link
+              href={`/character/${s.id}/edit`}
+              title={t("tp.seat.editSheet")}
+              aria-label={t("tp.seat.editSheet")}
+              className={actionCls}
+            >
+              <Pencil className="w-3.5 h-3.5" strokeWidth={1.75} />
+            </Link>
+            <Link
+              href={`/character/${s.id}?visibility=1`}
+              title={t("tp.seat.visibility")}
+              aria-label={t("tp.seat.visibility")}
+              className={actionCls}
+            >
+              <Eye className="w-3.5 h-3.5" strokeWidth={1.75} />
+            </Link>
+          </div>
+        ) : null}
       </div>
 
       {s.hasSheet ? (

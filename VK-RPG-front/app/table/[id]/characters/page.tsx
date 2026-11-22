@@ -146,7 +146,7 @@ export default function TableCharactersPage({ params }: { params: Promise<{ id: 
                         <img
                           src={ch.portraitUrl}
                           alt=""
-                          className="w-10 h-10 shrink-0 rounded-md border border-zinc-700/60 bg-zinc-900 object-cover"
+                          className="w-16 h-16 shrink-0 rounded-lg border border-zinc-700/60 bg-zinc-900 object-cover"
                         />
                       ) : (
                         <svg className="w-4 h-4 shrink-0 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -210,7 +210,7 @@ export default function TableCharactersPage({ params }: { params: Promise<{ id: 
                       <img
                         src={ch.portraitUrl}
                         alt=""
-                        className="w-10 h-10 shrink-0 rounded-md border border-zinc-700/60 bg-zinc-900 object-cover"
+                        className="w-16 h-16 shrink-0 rounded-lg border border-zinc-700/60 bg-zinc-900 object-cover"
                       />
                     ) : (
                       <svg className="w-4 h-4 shrink-0 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
