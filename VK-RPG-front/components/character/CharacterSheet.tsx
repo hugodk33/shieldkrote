@@ -430,12 +430,14 @@ interface CharacterSheetProps {
   showName?: boolean;
   /** The page header already renders bio/backstory — hide them here. */
   showBio?: boolean;
+  /** The page header already renders creation points — hide them here. */
+  showPoints?: boolean;
   /** Narrator-only: lets a catalog rule be switched off for this one
       character without touching the rule itself. */
   managePassive?: boolean;
 }
 
-export default function CharacterSheet({ data, visibility, showName = true, showBio = true, managePassive = false }: CharacterSheetProps) {
+export default function CharacterSheet({ data, visibility, showName = true, showBio = true, showPoints = true, managePassive = false }: CharacterSheetProps) {
   const { t } = useTranslation();
   const router = useRouter();
   const [busyRule, setBusyRule] = useState<string | null>(null);
@@ -579,10 +581,12 @@ export default function CharacterSheet({ data, visibility, showName = true, show
             {showBio && s?.bio ? <p className="text-lg text-zinc-400 mt-1">{s.bio}</p> : null}
             {showBio && s?.backstory ? <p className="text-zinc-500 text-sm mt-1 max-w-2xl">{s.backstory}</p> : null}
           </div>
-          <div className="flex flex-col items-end">
-            <span className="text-zinc-500 text-xs font-semibold uppercase tracking-wider">{t("cs.creationPoints")}</span>
-            <p className="text-amber-400 font-bold text-2xl leading-none mt-1">{masked("points", s?.points, "0")}</p>
-          </div>
+          {showPoints ? (
+            <div className="flex flex-col items-end">
+              <span className="text-zinc-500 text-xs font-semibold uppercase tracking-wider">{t("cs.creationPoints")}</span>
+              <p className="text-amber-400 font-bold text-2xl leading-none mt-1">{masked("points", s?.points, "0")}</p>
+            </div>
+          ) : null}
         </div>
 
         <div className="mt-6 pt-6 border-t border-zinc-700/40">

@@ -66,6 +66,12 @@ export default async function CharacterViewerPage({
             {data.character.sheet?.backstory ? (
               <p className="text-zinc-500 text-sm mt-1 max-w-2xl">{data.character.sheet.backstory}</p>
             ) : null}
+            <div className="mt-3">
+              <p className="text-zinc-500 text-xs font-semibold uppercase tracking-wider">{t("cs.creationPoints")}</p>
+              <p className="text-amber-400 font-bold text-2xl leading-none mt-1">
+                {data.character.sheet?.points ?? 0}
+              </p>
+            </div>
           </div>
         </div>
         {data.character.user?.username ? (
@@ -97,7 +103,7 @@ export default async function CharacterViewerPage({
         />
       ) : (
         <>
-          <CharacterSheet data={data} basePath={basePath} showName={false} showBio={false} managePassive />
+          <CharacterSheet data={data} basePath={basePath} showName={false} showBio={false} showPoints={false} managePassive />
           <CharacterVisibilityDrawer tableId={tableId} targetId={data.character.id} defaultOpen={openVisibility} />
         </>
       )}
