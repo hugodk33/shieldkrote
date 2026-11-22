@@ -2000,12 +2000,20 @@ async findAllGameLocations(id: any, scope?: ViewerScope | string | null): Promis
       WHERE id = ?
     `).get(id as string)
 
-    const locations = (db.prepare(`
+    const locationRows = db.prepare(`
       SELECT *
       FROM table_locations
       WHERE table_id = ?
       ORDER BY path ASC, name ASC
-    `).all(id as string) as any[]).map(locationToDTO)
+    `).all(id as string) as any[]
+    const locationIds = locationRows.map((l) => l.id as string)
+    const banners = locationRoleMap('banner', locationIds)
+    const galleries = galleryMap('location_images', 'location_id', locationIds)
+    const locations = locationRows.map((l) => ({
+      ...locationToDTO(l),
+      bannerUrl: banners.get(l.id) ?? null,
+      images: galleries.get(l.id) ?? [],
+    }))
 
     const { filter, characterId } = resolveViewerScope(scope)
 

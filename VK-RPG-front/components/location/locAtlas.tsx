@@ -11,14 +11,16 @@
    (set default, open the narrator page) are omitted.
    ============================================================ */
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import type { Location } from "@/lib/types";
 import { drawPlateBoard, drawPlateDrawing, paintCanvas, plateCanvas } from "@/lib/canvasgrid";
+import { useImageCache } from "@/lib/imagecache";
 import { interpolate, useTranslation } from "@/lib/i18n";
 import { floorPlanGroup } from "@/lib/location";
 import { KindGlyph, KIND_TINT } from "@/lib/location-glyphs";
 import CopyToTableButton from "@/components/table/CopyToTableButton";
+import ZoomControls from "@/components/map/ZoomControls";
 
 export const KNOWN_KINDS = new Set([
   "world",
@@ -318,56 +320,62 @@ export function LocationPlate({
 
 /* A coluna "estampa" do banner — o desenho (strokes + tiles) pintado no
    MapStudio, renderizado compacto com o mesmo motor de canvas dos mapas.
-   O banner só a mostra quando a localidade tem algo pintado na placa. */
+   Também recebe a imagem de fundo e os adesivos de imagem, para que o que
+   foi anexado à placa apareça aqui e não só na página de detalhe. */
 export function AtlasMapColumn({
   node,
   boxW = 176,
   boxH = 112,
   fullWidth = false,
   label,
+  zoom = 1,
 }: {
   node: Location;
   boxW?: number;
   boxH?: number;
   fullWidth?: boolean;
   label?: string;
+  zoom?: number;
 }) {
   const ref = useRef<HTMLCanvasElement | null>(null);
+  const drawing = node.drawing ?? [];
+  const imageMap = useImageCache([
+    node.bgImageUrl,
+    ...drawing.filter((s) => s.type === "image").map((s) => s.src ?? null),
+  ]);
+  const bgImage = node.bgImageUrl ? imageMap.get(node.bgImageUrl) ?? null : null;
 
   useEffect(() => {
     const cv = ref.current;
     if (!cv) return;
     const tiles = node.tiles ?? [];
-    const drawing = node.drawing ?? [];
     const { W, H, spec } = plateCanvas(node.hex ?? {}, 26, 34, 320, 240);
-    const scale = Math.min(boxW / W, boxH / H);
-    const dx = (boxW - W * scale) / 2;
-    const dy = (boxH - H * scale) / 2;
+    const fitScale = Math.min(boxW / W, boxH / H) * zoom;
+    const dx = (boxW - W * fitScale) / 2;
+    const dy = (boxH - H * fitScale) / 2;
     paintCanvas(
       cv,
       W,
       H,
       (ctx) => {
-        drawPlateBoard(ctx, W, H, spec, tiles, { accent: "#38bdf8" });
-        drawPlateDrawing(ctx, W, H, spec, drawing);
+        drawPlateBoard(ctx, W, H, spec, tiles, { accent: "#38bdf8", bgImage });
+        drawPlateDrawing(ctx, W, H, spec, drawing, null, "#38bdf8", imageMap);
       },
-      1,
-      { scale, dx, dy, boxW, boxH }
+      zoom,
+      { scale: fitScale, dx, dy, boxW, boxH }
     );
-  }, [boxW, boxH, node]);
+  }, [boxW, boxH, node, drawing, bgImage, imageMap, zoom]);
 
   return (
-    <div className={`overflow-hidden rounded-lg border border-zinc-700/40 bg-zinc-950/50 ${fullWidth ? "w-full" : ""}`}>
-      <canvas
-        ref={ref}
-        width={boxW}
-        height={boxH}
-        role="img"
-        aria-label={label}
-        style={fullWidth ? { width: "100%", height: "auto", display: "block" } : { width: `${boxW}px`, height: `${boxH}px` }}
-        className="block touch-none select-none"
-      />
-    </div>
+    <canvas
+      ref={ref}
+      width={boxW}
+      height={boxH}
+      role="img"
+      aria-label={label}
+      style={fullWidth ? { width: "100%", height: "auto", display: "block" } : { width: `${boxW}px`, height: `${boxH}px` }}
+      className="block touch-none select-none"
+    />
   );
 }
 
@@ -411,7 +419,16 @@ export function CurrentMapStrip({
     node.kind && KNOWN_KINDS.has(node.kind) ? t(`tp.locKind.${node.kind}`) : t("tp.locKind.generic");
   const childCount = node.children?.length ?? 0;
   const members = group && group.length > 1 ? group : null;
-  const hasPlate = (node.tiles?.length ?? 0) > 0 || (node.drawing?.length ?? 0) > 0;
+  /* A imagem de capa (ou, na falta dela, a primeira da galeria) ocupa o
+     lugar do ícone no topo da trilha, exatamente como o mapa pintado. */
+  const heroUrl = node.bannerUrl || node.images?.[0] || null;
+  const hasPlate =
+    (node.tiles?.length ?? 0) > 0 ||
+    (node.drawing?.length ?? 0) > 0 ||
+    !!node.bgImageUrl ||
+    !!heroUrl;
+  const [heroZoom, setHeroZoom] = useState(1);
+  useEffect(() => { setHeroZoom(1); }, [node.id]);
   const glyphTint = player
     ? (PLAYER_KIND_TINT[node.kind ?? ""] ?? KIND_TINT[node.kind ?? "site"] ?? "text-zinc-500")
     : (KIND_TINT[node.kind ?? "site"] ?? "text-zinc-500");
@@ -497,7 +514,26 @@ export function CurrentMapStrip({
 
         <div className="w-full">
           {hasPlate ? (
-            <AtlasMapColumn node={node} label={t("lc.lmap.aria")} boxW={560} boxH={160} fullWidth />
+            <div className="relative aspect-[7/2] w-full overflow-hidden rounded-lg border border-zinc-700/40 bg-zinc-950/50">
+              {heroUrl ? (
+                <img
+                  src={heroUrl}
+                  alt={node.name || ""}
+                  className="absolute inset-0 h-full w-full object-cover"
+                  style={{ transform: `scale(${heroZoom})` }}
+                />
+              ) : (
+                <AtlasMapColumn
+                  node={node}
+                  label={t("lc.lmap.aria")}
+                  boxW={560}
+                  boxH={160}
+                  fullWidth
+                  zoom={heroZoom}
+                />
+              )}
+              <ZoomControls zoom={heroZoom} onZoom={setHeroZoom} />
+            </div>
           ) : (
             <div
               className="flex w-full aspect-[7/2] items-center justify-center rounded-lg border border-zinc-700/40 bg-zinc-950/50"
