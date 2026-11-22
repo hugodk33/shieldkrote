@@ -595,11 +595,11 @@ export default function CharacterSheet({ data, visibility, showName = true, show
               <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-500 mb-3">
                 {t("cs.coreAttributes")}
               </h3>
-              <div className="flex justify-center flex-wrap gap-1 mb-6">
+              <div className="flex justify-center gap-1 mb-6">
                 {attrCards.map((a) => (
                   <div
                     key={a.label}
-                    className="flex flex-col items-center gap-1 p-2 bg-zinc-800/40 rounded-lg min-w-[55px]"
+                    className="flex flex-col items-center p-2 bg-zinc-800/40 rounded-lg max-w-1/4 w-1/4"
                   >
                     <svg
                       className="w-5 h-5"
