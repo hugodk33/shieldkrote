@@ -45,33 +45,36 @@ export default async function CharacterViewerPage({
           {t("itm.back")}
         </Link>
       ) : null}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-center mb-5">
-        {/* coluna da esquerda */}
-        <div className="min-w-0">
+
+      <div className="flex flex-wrap items-end justify-between gap-4 mb-5">
+        <div className="flex items-center gap-4">
           {data.character.portraitUrl ? (
             <img
               src={data.character.portraitUrl}
               alt={data.character.sheet?.name || data.character.name || ""}
-              className="w-full aspect-square rounded-xl border border-zinc-700/60 bg-zinc-900 object-cover"
+              className="h-auto w-full max-w-[220px] border border-zinc-700/60 object-cover"
             />
           ) : null}
+          <div>
+            <p className="font-mono text-[10px] tracking-widest uppercase text-green-300/90">{t("pg.ch.eyebrow")}</p>
+            <h1 className="text-2xl md:text-3xl font-bold text-zinc-100 mt-1">
+              {data.character.sheet?.name || data.character.name || t("nav.character")}
+            </h1>
+            {data.character.sheet?.bio ? (
+              <p className="text-lg text-zinc-400 mt-1">{data.character.sheet.bio}</p>
+            ) : null}
+            {data.character.sheet?.backstory ? (
+              <p className="text-zinc-500 text-sm mt-1 max-w-2xl">{data.character.sheet.backstory}</p>
+            ) : null}
+          </div>
         </div>
-        {/* coluna da direita */}
-        <div className="min-w-0">
-          <p className="font-mono text-[10px] tracking-widest uppercase text-green-300/90">{t("pg.ch.eyebrow")}</p>
-          <h1 className="text-2xl md:text-3xl font-bold text-zinc-100 mt-1">
-            {data.character.sheet?.name || data.character.name || t("nav.character")}
-          </h1>
-          {data.table?.title ? (
-            <p className="font-mono text-[10px] uppercase tracking-widest text-zinc-500 mt-0.5">{data.table.title}</p>
-          ) : null}
-          {data.character.user?.username ? (
-            <span className="font-mono text-[10px] uppercase tracking-widest text-zinc-500 border border-zinc-700/50 rounded-md px-2 py-1 inline-block mt-3">
-              {data.character.user.username}
-            </span>
-          ) : null}
-        </div>
+        {data.character.user?.username ? (
+          <span className="font-mono text-[10px] uppercase tracking-widest text-zinc-500 border border-zinc-700/50 rounded-md px-2 py-1">
+            {data.character.user.username}
+          </span>
+        ) : null}
       </div>
+
       <CharacterTabs basePath={basePath} active={activeTab} moment={momentNum} />
 
       {activeTab === "images" ? (
@@ -94,7 +97,7 @@ export default async function CharacterViewerPage({
         />
       ) : (
         <>
-          <CharacterSheet data={data} basePath={basePath} showName={false} managePassive />
+          <CharacterSheet data={data} basePath={basePath} showName={false} showBio={false} managePassive />
           <CharacterVisibilityDrawer tableId={tableId} targetId={data.character.id} defaultOpen={openVisibility} />
         </>
       )}

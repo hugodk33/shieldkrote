@@ -428,12 +428,14 @@ interface CharacterSheetProps {
   /** The page already shows the name in its own header — hide the
       sheet's identity banner so the name is never duplicated. */
   showName?: boolean;
+  /** The page header already renders bio/backstory — hide them here. */
+  showBio?: boolean;
   /** Narrator-only: lets a catalog rule be switched off for this one
       character without touching the rule itself. */
   managePassive?: boolean;
 }
 
-export default function CharacterSheet({ data, visibility, showName = true, managePassive = false }: CharacterSheetProps) {
+export default function CharacterSheet({ data, visibility, showName = true, showBio = true, managePassive = false }: CharacterSheetProps) {
   const { t } = useTranslation();
   const router = useRouter();
   const [busyRule, setBusyRule] = useState<string | null>(null);
@@ -574,8 +576,8 @@ export default function CharacterSheet({ data, visibility, showName = true, mana
             {showName ? (
               <h1 className="text-2xl md:text-3xl font-bold text-zinc-100">{name}</h1>
             ) : null}
-            {s?.bio ? <p className="text-lg text-zinc-400 mt-1">{s.bio}</p> : null}
-            {s?.backstory ? <p className="text-zinc-500 text-sm mt-1 max-w-2xl">{s.backstory}</p> : null}
+            {showBio && s?.bio ? <p className="text-lg text-zinc-400 mt-1">{s.bio}</p> : null}
+            {showBio && s?.backstory ? <p className="text-zinc-500 text-sm mt-1 max-w-2xl">{s.backstory}</p> : null}
           </div>
           <div className="flex flex-col items-end">
             <span className="text-zinc-500 text-xs font-semibold uppercase tracking-wider">{t("cs.creationPoints")}</span>
