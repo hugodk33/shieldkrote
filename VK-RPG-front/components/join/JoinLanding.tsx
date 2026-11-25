@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import {
   CheckCircle2,
@@ -64,6 +64,12 @@ export default function JoinLanding({
   preview,
 }: JoinLandingProps) {
   const { t } = useTranslation();
+  // `t` é recriado a cada render; usá-lo como dependência do efeito de status
+  // reinicia a busca sem fim (setStatus -> render -> nova `t` -> fetch...).
+  const tRef = useRef(t);
+  useEffect(() => {
+    tRef.current = t;
+  });
 
   const [role, setRole] = useState<JoinRoleValue>(initialRole ?? JoinRole.Player);
   const [userId, setUserId] = useState<string>(initialUserId ?? "");
@@ -132,7 +138,7 @@ export default function JoinLanding({
           setError(null);
         }
       } catch {
-        if (alive) setError(t("jn.loadError"));
+        if (alive) setError(tRef.current("jn.loadError"));
       } finally {
         if (alive) setLoading(false);
       }
@@ -140,7 +146,7 @@ export default function JoinLanding({
     return () => {
       alive = false;
     };
-  }, [tableId, userId, tableExists, t]);
+  }, [tableId, userId, tableExists]);
 
   const refreshStatus = async () => {
     if (!userId) return;
@@ -404,9 +410,37 @@ function JoinForm({
   onSubmit: () => void;
 }) {
   const { t } = useTranslation();
+  const [userQuery, setUserQuery] = useState("");
   const roleLabel = (r: JoinRoleValue) =>
     r === JoinRole.Player ? t("jn.role.player") : t("jn.role.coNarrator");
   const known = candidates.some((c) => c.id === userId);
+
+  // O banco de demonstração tem vários usuários com o mesmo nome/e-mail.
+  // Listar todos cruza a tela; aqui a busca filtra e o id curto desempata
+  // os duplicados sem despejar o UUID inteiro na opção.
+  const keyOf = (c: TableJoinCandidate) => `${c.username} · ${c.email ?? ""}`;
+  const counts = candidates.reduce<Record<string, number>>((acc, c) => {
+    const key = keyOf(c);
+    acc[key] = (acc[key] ?? 0) + 1;
+    return acc;
+  }, {});
+  const normalize = (value: string) =>
+    value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  const term = normalize(userQuery.trim());
+  const matches = term
+    ? candidates.filter((c) => normalize(`${c.username} ${c.email ?? ""}`).includes(term))
+    : candidates;
+  const windowed = matches.slice(0, 12);
+  const selected = candidates.find((c) => c.id === userId) ?? null;
+  const options =
+    selected && !windowed.some((c) => c.id === selected.id)
+      ? [selected, ...windowed.slice(0, 11)]
+      : windowed;
+  const hidden = Math.max(0, matches.length - options.length);
+  const labelOf = (c: TableJoinCandidate) => {
+    const name = c.username || c.email || c.id.slice(0, 8);
+    return counts[keyOf(c)] > 1 ? `${name} · ${c.id.slice(0, 8)}` : name;
+  };
 
   return (
     <div className="mt-5 space-y-4">
@@ -441,19 +475,33 @@ function JoinForm({
         <span className="font-mono text-[10px] uppercase tracking-widest text-zinc-500 block mb-1.5">
           {t("jn.who")}
         </span>
+        <input
+          type="search"
+          value={userQuery}
+          onChange={(e) => setUserQuery(e.target.value)}
+          placeholder={t("jn.whoSearch")}
+          className="w-full bg-zinc-800/60 border border-zinc-700/50 rounded-lg px-3 py-2 text-zinc-100 text-sm focus:outline-none focus:border-emerald-600/60"
+        />
         <select
           value={userId}
           onChange={(e) => onUser(e.target.value)}
-          className="w-full bg-zinc-800/60 border border-zinc-700/50 rounded-lg px-3 py-2 text-zinc-100 text-sm focus:outline-none focus:border-emerald-600/60"
+          className="w-full mt-2 bg-zinc-800/60 border border-zinc-700/50 rounded-lg px-3 py-2 text-zinc-100 text-sm focus:outline-none focus:border-emerald-600/60"
         >
           <option value="">{t("jn.whoPh")}</option>
-          {candidates.map((c) => (
+          {options.map((c) => (
             <option key={c.id} value={c.id}>
-              {c.username} ({c.email})
+              {labelOf(c)}
             </option>
           ))}
-          {userId && !known ? <option value={userId}>{userId}</option> : null}
+          {userId && !known ? (
+            <option value={userId}>{t("jn.whoUnknown")}: {userId.slice(0, 8)}</option>
+          ) : null}
         </select>
+        {hidden > 0 ? (
+          <span className="block text-xs text-zinc-500 mt-1.5">
+            {t("jn.whoMore").replace("{n}", String(hidden))}
+          </span>
+        ) : null}
         {!candidatesLoading && candidates.length === 0 ? (
           <span className="block text-xs text-zinc-500 mt-1.5">{t("jn.noCandidates")}</span>
         ) : null}
